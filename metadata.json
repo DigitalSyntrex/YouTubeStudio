@@ -1,0 +1,6 @@
+{
+  "name": "Playthrough Studio Pro",
+  "description": "Professional YouTube Let's Play & Playthrough Series Planner with episode breakdowns, 1280x720 thumbnail generator, SEO tags, and production workflow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
