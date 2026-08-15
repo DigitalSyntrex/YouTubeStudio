@@ -42,7 +42,12 @@ import {
   Edit2,
   FolderUp,
   Copy,
-  FileCheck
+  FileCheck,
+  Printer,
+  Download,
+  Map,
+  Layers,
+  FileSpreadsheet
 } from "lucide-react";
 import { formatCompactNumber } from "./YouTubeStudioUploadModal";
 import { useAuth } from "../context/AuthContext";
@@ -50,29 +55,47 @@ import { findSynopsisInDb, CustomSynopsisEntry } from "../utils/gameSynopsisDb";
 
 interface EpisodeListProps {
   episodes: Episode[];
+  series?: PlaythroughSeries;
   gameTitle?: string;
   activeSeries?: PlaythroughSeries;
+  targetLength?: string;
   onSelectEpisode: (episode: Episode) => void;
   onUpdateStatus: (id: number, status: EpisodeStatus) => void;
   onOpenAddEpisode?: () => void;
+  onOpenAddEpisodeModal?: () => void;
   onDuplicateEpisode?: (episode: Episode) => void;
   onDeleteEpisode?: (id: number) => void;
   onOpenRecordingTimer?: (episode?: Episode) => void;
   onOpenYouTubeStudio?: (episodeId?: number) => void;
+  onOpenPrintCheatSheet?: () => void;
+  onOpenThumbnailStudio?: (episodeId?: number) => void;
+  onOpenBossLootCatalog?: () => void;
+  onOpenProtagonistDB?: () => void;
+  onOpenQuestBranchTracker?: () => void;
+  onUpdateQuests?: any;
   onUpdateSeriesSynopsis?: (seriesId: string, synopsis: string, source?: string) => void;
 }
 
 export const EpisodeList: React.FC<EpisodeListProps> = ({
   episodes,
+  series,
   gameTitle = "Playthrough",
   activeSeries,
+  targetLength,
   onSelectEpisode,
   onUpdateStatus,
   onOpenAddEpisode,
+  onOpenAddEpisodeModal,
   onDuplicateEpisode,
   onDeleteEpisode,
   onOpenRecordingTimer,
   onOpenYouTubeStudio,
+  onOpenPrintCheatSheet,
+  onOpenThumbnailStudio,
+  onOpenBossLootCatalog,
+  onOpenProtagonistDB,
+  onOpenQuestBranchTracker,
+  onUpdateQuests,
   onUpdateSeriesSynopsis,
 }) => {
   const { userProfile } = useAuth();
@@ -1020,10 +1043,9 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                         onOpenRecordingTimer(episode);
                       }}
                       title={`Start Live Recording Session (EP ${episode.partNumber})`}
-                      className="px-2.5 py-1 bg-[#2a131b] hover:bg-[#3d1926] text-red-200 font-bold text-xs rounded-lg border border-red-500/50 transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                      className="p-1.5 rounded-lg bg-[#2a131b] hover:bg-[#3d1926] text-red-400 hover:text-red-200 border border-red-500/50 transition-all flex items-center justify-center cursor-pointer shadow-sm"
                     >
                       <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                      <span className="hidden sm:inline">REC</span>
                     </button>
                   )}
 

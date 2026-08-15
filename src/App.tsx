@@ -748,6 +748,7 @@ function PlaythroughStudioApp() {
             onOpenQuestBranchTracker={() => setShowQuestBranchTracker(true)}
             onUpdateQuests={handleUpdateQuests}
             onUpdateSeriesSynopsis={handleUpdateSeriesSynopsis}
+            onOpenPrintCheatSheet={() => setShowPrintCheatSheet(true)}
           />
         )}
       </main>

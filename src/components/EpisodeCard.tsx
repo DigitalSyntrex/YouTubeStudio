@@ -677,7 +677,7 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
           {/* RIGHT: ACTION BUTTONS */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* 1. Start Live Recording Session */}
+            {/* 1. Start Live Recording Session (Compact Icon) */}
             <button
               type="button"
               onClick={(e) => {
@@ -685,10 +685,9 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
                 onOpenRecordingTimer?.(episode);
               }}
               title={`Start Live Recording Session (EP ${episode.partNumber})`}
-              className="px-3 py-1.5 rounded-xl bg-[#2a131b] hover:bg-[#3d1926] active:scale-95 text-red-200 font-black text-xs transition-all border border-red-500/50 flex items-center gap-1.5 cursor-pointer shadow-md shadow-red-950/40 group"
+              className="p-2 rounded-xl bg-[#2a131b]/90 hover:bg-[#3d1926] active:scale-95 text-red-200 font-black text-xs transition-all border border-red-500/50 hover:border-red-400 flex items-center justify-center cursor-pointer shadow-md shadow-red-950/40 group"
             >
-              <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse shrink-0" />
-              <span className="tracking-wide text-red-100 group-hover:text-white">REC Timer</span>
+              <Radio className="w-4 h-4 text-red-400 animate-pulse group-hover:text-red-200 shrink-0" />
             </button>
 
             {/* 2. YouTube Studio Upload and 1 Click Copy Panel */}
