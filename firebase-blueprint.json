@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firestore-blueprint.json",
+  "entities": {
+    "users": {
+      "fields": {
+        "id": { "type": "string", "description": "Firebase Auth UID" },
+        "username": { "type": "string", "description": "Unique chosen handle / username" },
+        "displayName": { "type": "string", "description": "Display name of the user" },
+        "email": { "type": "string", "description": "User email address" },
+        "avatarUrl": { "type": "string", "description": "User custom avatar picture URL or base64" },
+        "theme": { "type": "string", "description": "Preferred UI theme ID" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of user registration" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last profile update" },
+        "customSettings": {
+          "type": "object",
+          "description": "User customization preferences such as default episode duration, banner styling, auto-save settings"
+        }
+      }
+    },
+    "userSeries": {
+      "fields": {
+        "id": { "type": "string", "description": "Series unique ID" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "gameTitle": { "type": "string", "description": "Game title" },
+        "playthroughType": { "type": "string", "description": "Playthrough format/type" },
+        "coverImage": { "type": "string", "description": "Series cover art image URL or base64" },
+        "gameLogoUrl": { "type": "string", "description": "Game logo PNG with transparency" },
+        "episodes": { "type": "array", "description": "List of episodes in this series" },
+        "quests": { "type": "array", "description": "List of quest checkpoints" },
+        "synopsis": { "type": "string", "description": "Game synopsis" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      }
+    }
+  }
+}

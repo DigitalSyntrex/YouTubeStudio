@@ -114,7 +114,7 @@ export const AchievementToast: React.FC<AchievementToastProps> = ({ toastData, o
         <div className="flex flex-col items-end shrink-0 pl-1">
           <div className="flex items-center gap-1 bg-amber-500/20 text-amber-300 border border-amber-400/50 px-2 py-1 rounded-lg font-black text-xs shadow-sm">
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>+{achievement.points} PTS</span>
+            <span>+{achievement.points} GP</span>
           </div>
         </div>
 

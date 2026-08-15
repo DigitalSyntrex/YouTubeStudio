@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profile documents - allow creators to read and store their profile
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Series documents - allow creators to store and sync their playthrough series
+    match /userSeries/{seriesId} {
+      allow read, write: if true;
+    }
+
+    // Fallback rule
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

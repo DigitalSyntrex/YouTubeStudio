@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useRef } from "react";
 import { Episode, EpisodeStatus, PlaythroughSeries, QuestEntry } from "./types";
 import { defaultPlaythroughSeries } from "./data/episodesData";
@@ -62,10 +57,26 @@ import {
   applyThemeToDocument,
   THEME_CONFIGS,
 } from "./utils/themeUtils";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthModal } from "./components/AuthModal";
+import { AccountSettingsModal } from "./components/AccountSettingsModal";
+import { UserDashboardHeader } from "./components/UserDashboardHeader";
+import { fetchUserSeriesList, saveUserSeries, deleteUserSeries } from "./utils/seriesCloudService";
 
-export default function App() {
+function PlaythroughStudioApp() {
+  const { currentUser, userProfile, loading } = useAuth();
+
   const [currentTheme, setCurrentTheme] = useState<AppThemeId>(() => getSavedTheme());
   const [showThemeSwitcherModal, setShowThemeSwitcherModal] = useState<boolean>(false);
+  const [showAccountSettingsModal, setShowAccountSettingsModal] = useState<boolean>(false);
+
+  // Sync theme with userProfile preference if available
+  useEffect(() => {
+    if (userProfile?.theme && userProfile.theme in THEME_CONFIGS) {
+      setCurrentTheme(userProfile.theme as AppThemeId);
+      saveTheme(userProfile.theme as AppThemeId);
+    }
+  }, [userProfile?.theme]);
 
   useEffect(() => {
     applyThemeToDocument(currentTheme);
@@ -81,57 +92,22 @@ export default function App() {
     if (!saved || saved.length === 0) {
       return defaultPlaythroughSeries;
     }
-    const merged = [...saved];
-    defaultPlaythroughSeries.forEach((defSeries) => {
-      const idx = merged.findIndex((s) => s.id === defSeries.id);
-      if (idx === -1) {
-        merged.unshift(defSeries);
-      } else if ((defSeries.episodes?.length || 0) > (merged[idx].episodes?.length || 0)) {
-        const existingAvatars: Record<string, string> = {};
-        merged[idx].episodes?.forEach((ep) => {
-          if (ep.heroAvatars) Object.assign(existingAvatars, ep.heroAvatars);
-        });
-        merged[idx] = {
-          ...merged[idx],
-          episodes: defSeries.episodes.map((ep) => ({
-            ...ep,
-            heroAvatars: { ...existingAvatars, ...(ep.heroAvatars || {}) },
-          })),
-          quests: defSeries.quests || merged[idx].quests,
-        };
-      }
-    });
-    return merged;
+    return saved;
   });
 
-  // Attempt to hydrate fuller state from IndexedDB (preserves high-res thumbnail base64 images)
+  // Load cloud series for logged in user
   useEffect(() => {
-    loadFromIndexedDB<PlaythroughSeries[]>("youtube_playthrough_series").then((idbSeries) => {
-      if (idbSeries && Array.isArray(idbSeries) && idbSeries.length > 0) {
-        const merged = [...idbSeries];
-        defaultPlaythroughSeries.forEach((defSeries) => {
-          const idx = merged.findIndex((s) => s.id === defSeries.id);
-          if (idx === -1) {
-            merged.unshift(defSeries);
-          } else if ((defSeries.episodes?.length || 0) > (merged[idx].episodes?.length || 0)) {
-            const existingAvatars: Record<string, string> = {};
-            merged[idx].episodes?.forEach((ep) => {
-              if (ep.heroAvatars) Object.assign(existingAvatars, ep.heroAvatars);
-            });
-            merged[idx] = {
-              ...merged[idx],
-              episodes: defSeries.episodes.map((ep) => ({
-                ...ep,
-                heroAvatars: { ...existingAvatars, ...(ep.heroAvatars || {}) },
-              })),
-              quests: defSeries.quests || merged[idx].quests,
-            };
-          }
-        });
-        setSeriesList(merged);
+    if (!currentUser) return;
+
+    fetchUserSeriesList(currentUser.uid).then((cloudSeries) => {
+      if (cloudSeries && cloudSeries.length > 0) {
+        setSeriesList(cloudSeries);
+        if (!cloudSeries.some((s) => s.id === activeSeriesId)) {
+          setActiveSeriesId(cloudSeries[0].id);
+        }
       }
     });
-  }, []);
+  }, [currentUser]);
 
   const [activeSeriesId, setActiveSeriesId] = useState<string>(() => {
     return safeGetLocalStorage<string>("youtube_active_series_id", "mafia-definitive-edition");
@@ -146,7 +122,7 @@ export default function App() {
 
   const activeSeries = seriesList.find((s) => s.id === activeSeriesId) || seriesList[0];
 
-  const [targetLength, setTargetLength] = useState<number>(90);
+  const [targetLength, setTargetLength] = useState<number>(() => userProfile?.defaultEpisodeDuration || 90);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [showGuide, setShowGuide] = useState<boolean>(false);
   const [showExport, setShowExport] = useState<boolean>(false);
@@ -158,9 +134,9 @@ export default function App() {
   const [showQuestBranchTracker, setShowQuestBranchTracker] = useState<boolean>(false);
   const [showNewSeriesModal, setShowNewSeriesModal] = useState<boolean>(false);
   const [showAddEpisodeModal, setShowAddEpisodeModal] = useState<boolean>(false);
-  const [thumbnailEpisodeId, setThumbnailEpisodeId] = useState<number | undefined>(undefined);
+  const [showGameTitleLogoModal, setShowGameTitleLogoModal] = useState<boolean>(false);
 
-  // 10 New Studio Tools Upgrades States
+  // 10 New Studio Tools Modals
   const [showCtrPredictor, setShowCtrPredictor] = useState<boolean>(false);
   const [showChapterManager, setShowChapterManager] = useState<boolean>(false);
   const [showSoundcheck, setShowSoundcheck] = useState<boolean>(false);
@@ -171,155 +147,36 @@ export default function App() {
   const [showThumbnailPresetStudio, setShowThumbnailPresetStudio] = useState<boolean>(false);
   const [showBatchEpisodeEditor, setShowBatchEpisodeEditor] = useState<boolean>(false);
   const [showPrintCheatSheet, setShowPrintCheatSheet] = useState<boolean>(false);
-  const [showRecordingTimerModal, setShowRecordingTimerModal] = useState<boolean>(false);
+  const [showRecordingTimer, setShowRecordingTimer] = useState<boolean>(false);
+  const [recordingTimerInitialEpisode, setRecordingTimerInitialEpisode] = useState<Episode | undefined>(undefined);
   const [showMirillisActionModal, setShowMirillisActionModal] = useState<boolean>(false);
   const [showYouTubeStudioModal, setShowYouTubeStudioModal] = useState<boolean>(false);
   const [showBossEncounterPlanner, setShowBossEncounterPlanner] = useState<boolean>(false);
   const [showCompletionDashboard, setShowCompletionDashboard] = useState<boolean>(false);
-  const [showGameTitleLogoModal, setShowGameTitleLogoModal] = useState<boolean>(false);
-  const [recordingTimerEpisodeId, setRecordingTimerEpisodeId] = useState<number | null>(null);
 
-  const handleUpdateSeriesLogo = (
-    seriesId: string,
-    logoUrl: string | undefined,
-    useTitleLogo: boolean
-  ) => {
-    setSeriesList((prevSeries) =>
-      prevSeries.map((s) =>
-        s.id === seriesId
-          ? {
-              ...s,
-              gameTitleLogo: logoUrl,
-              useTitleLogo: useTitleLogo,
-            }
-          : s
-      )
-    );
-    setToast({
-      id: Date.now(),
-      title: logoUrl ? "Game Title Logo Applied" : "Title Reverted to Text",
-      subtitle: logoUrl
-        ? "Game logo will auto-fit across Studio Landing Hub and Planner Header"
-        : "Reverted to plain text game title display",
-      timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-      type: "save",
-    });
-  };
-
-  const handleUpdateSeriesSynopsis = (
-    seriesId: string,
-    synopsis: string,
-    source?: string
-  ) => {
-    setSeriesList((prevSeries) =>
-      prevSeries.map((s) =>
-        s.id === seriesId
-          ? {
-              ...s,
-              gameSynopsis: synopsis,
-              gameSynopsisSource: source || "AI Web Scraped via Google Search",
-            }
-          : s
-      )
-    );
-
-    // Trigger Gamerscore & Achievement Toast for AI Web Synopsis
-    triggerAchievement("lore_master", 1);
-
-    setToast({
-      id: Date.now(),
-      title: "AI Game Synopsis Applied",
-      subtitle: `Web-scraped plot & setting synopsis updated for active game`,
-      timestamp: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-      type: "save",
-    });
-  };
-
-  const handleOpenRecordingTimer = (ep?: Episode) => {
-    setRecordingTimerEpisodeId(ep ? ep.id : null);
-    setShowRecordingTimerModal(true);
-  };
-
+  const [thumbnailEpisodeId, setThumbnailEpisodeId] = useState<number | undefined>(undefined);
   const [toast, setToast] = useState<ToastData | null>(null);
-  const isInitialMount = useRef(true);
+  const [achievementToast, setAchievementToast] = useState<AchievementUnlockToastData | null>(null);
 
-  // Production Milestones States & Persistence
+  // Milestone Celebration State
   const [milestoneHistory, setMilestoneHistory] = useState<MilestoneRecord[]>(() => {
     return safeGetLocalStorage<MilestoneRecord[]>("youtube_series_milestones", []);
   });
   const [activeCelebrationMilestone, setActiveCelebrationMilestone] = useState<MilestoneRecord | null>(null);
 
-  // Check for newly reached production milestones (25%, 50%, 75%, 100%)
+  const isInitialMount = useRef(true);
+
+  // Save series to IndexedDB, local storage & Cloud when changed
   useEffect(() => {
-    if (!seriesList || seriesList.length === 0) return;
+    saveToIndexedDB("youtube_playthrough_series", seriesList);
+    const savedLocally = safeSetLocalStorage("youtube_playthrough_series", seriesList);
 
-    let newRecords: MilestoneRecord[] = [];
-    let latestCelebration: MilestoneRecord | null = null;
-
-    seriesList.forEach((series) => {
-      const totalCount = series.episodes?.length || 0;
-      if (totalCount === 0) return;
-
-      const completedCount = series.episodes.filter((e) => e.status !== "not_started").length;
-      const pct = (completedCount / totalCount) * 100;
-
-      const milestones: MilestonePercent[] = [25, 50, 75, 100];
-      milestones.forEach((m) => {
-        if (pct >= m) {
-          const alreadyRecorded = milestoneHistory.some(
-            (rec) => rec.seriesId === series.id && rec.milestone === m
-          );
-
-          if (!alreadyRecorded) {
-            const record: MilestoneRecord = {
-              id: `${series.id}_milestone_${m}_${Date.now()}`,
-              seriesId: series.id,
-              gameTitle: series.gameTitle,
-              milestone: m,
-              unlockedAt: new Date().toISOString(),
-              completedCount,
-              totalCount,
-              viewed: false,
-            };
-            newRecords.push(record);
-            if (series.id === activeSeriesId) {
-              latestCelebration = record;
-            } else if (!latestCelebration) {
-              latestCelebration = record;
-            }
-          }
-        }
-      });
-    });
-
-    if (newRecords.length > 0) {
-      setMilestoneHistory((prev) => {
-        const updated = [...newRecords, ...prev];
-        safeSetLocalStorage("youtube_series_milestones", updated);
-        return updated;
-      });
-
-      if (!isInitialMount.current && latestCelebration) {
-        setActiveCelebrationMilestone(latestCelebration);
-        const timeStr = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-        setToast({
-          id: Date.now(),
-          title: `🏆 ${(latestCelebration as MilestoneRecord).milestone}% Milestone Reached!`,
-          subtitle: `${(latestCelebration as MilestoneRecord).gameTitle}: ${(latestCelebration as MilestoneRecord).completedCount} of ${(latestCelebration as MilestoneRecord).totalCount} episodes completed!`,
-          timestamp: timeStr,
-          type: "success",
-        });
+    if (currentUser) {
+      // Sync active series to Firestore cloud collection
+      if (activeSeries) {
+        saveUserSeries(currentUser.uid, activeSeries);
       }
     }
-  }, [seriesList, activeSeriesId]);
-
-  // Save series to IndexedDB & local storage when changed
-  useEffect(() => {
-    // 1. Asynchronously save full state to IndexedDB (handles large base64 image data)
-    saveToIndexedDB("youtube_playthrough_series", seriesList);
-
-    // 2. Save state (with automatic quota fallback) to localStorage
-    const savedLocally = safeSetLocalStorage("youtube_playthrough_series", seriesList);
 
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -329,12 +186,12 @@ export default function App() {
     const timeStr = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
     setToast({
       id: Date.now(),
-      title: savedLocally ? "Storage Saved" : "Progress Saved (IndexedDB)",
+      title: currentUser ? "Cloud & Storage Synced" : savedLocally ? "Storage Saved" : "Progress Saved (IndexedDB)",
       subtitle: `${activeSeries?.gameTitle || "Playthrough"} series progress updated`,
       timestamp: timeStr,
       type: "save",
     });
-  }, [seriesList]);
+  }, [seriesList, currentUser]);
 
   // Current episodes & quests for active series
   const episodes = activeSeries?.episodes || [];
@@ -353,7 +210,6 @@ export default function App() {
     );
   };
 
-  // Update status handler for active series
   const handleUpdateStatus = (id: number, status: EpisodeStatus) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
@@ -369,13 +225,11 @@ export default function App() {
     );
   };
 
-  // Update episode content handler
   const handleUpdateEpisode = (updated: Episode) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) => {
         if (series.id !== activeSeries.id) return series;
 
-        // 1. Gather series-wide heroAvatars across all episodes
         const seriesWideAvatars: Record<string, string> = {};
 
         for (const ep of series.episodes) {
@@ -383,7 +237,6 @@ export default function App() {
           Object.assign(seriesWideAvatars, epAvatars);
         }
 
-        // Purge any avatars from seriesWideAvatars if removed in updated.heroAvatars
         if (updated.heroAvatars) {
           const updatedNormKeys = new Set(Object.keys(updated.heroAvatars).map((k) => normalizeHeroName(k)));
           const currentEp = series.episodes.find((e) => e.id === updated.id);
@@ -401,7 +254,6 @@ export default function App() {
           }
         }
 
-        // Update selectedEpisode with merged seriesWideAvatars
         setSelectedEpisode((prev) => {
           if (!prev || prev.id !== updated.id) return updated;
           return {
@@ -410,7 +262,6 @@ export default function App() {
           };
         });
 
-        // 2. Assign merged seriesWideAvatars to all episodes
         return {
           ...series,
           episodes: series.episodes.map((ep) => {
@@ -425,7 +276,6 @@ export default function App() {
     );
   };
 
-  // Save generated thumbnail to an episode
   const handleApplyThumbnail = (episodeId: number, thumbnailUrl: string) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
@@ -434,41 +284,76 @@ export default function App() {
               ...series,
               episodes: series.episodes.map((ep) =>
                 ep.id === episodeId
-                  ? {
-                      ...ep,
-                      suggestedThumbnailPrompt: thumbnailUrl,
-                      thumbnailConfig: {
-                        ...ep.thumbnailConfig,
-                        customImage: thumbnailUrl,
-                      },
-                    }
+                  ? { ...ep, thumbnailCustomImage: thumbnailUrl }
                   : ep
               ),
             }
           : series
       )
     );
-  };
 
-  // Add new series handler
-  const handleAddSeries = (newSeries: PlaythroughSeries) => {
-    setSeriesList((prev) => [newSeries, ...prev]);
-    setActiveSeriesId(newSeries.id);
-  };
-
-  // Delete playthrough series handler
-  const handleDeleteSeries = (idToDelete: string) => {
-    const remaining = seriesList.filter((s) => s.id !== idToDelete);
-    if (remaining.length > 0) {
-      setActiveSeriesId(remaining[0].id);
-      setSeriesList(remaining);
-    } else {
-      setSeriesList(defaultPlaythroughSeries);
-      setActiveSeriesId(defaultPlaythroughSeries[0].id);
+    if (selectedEpisode && selectedEpisode.id === episodeId) {
+      setSelectedEpisode((prev) => (prev ? { ...prev, thumbnailCustomImage: thumbnailUrl } : null));
     }
   };
 
-  // Add new episode handler
+  const handleBatchApplyThumbnails = (thumbnailsMap: Record<number, string>) => {
+    setSeriesList((prevSeries) =>
+      prevSeries.map((series) => {
+        if (series.id !== activeSeries.id) return series;
+        return {
+          ...series,
+          episodes: series.episodes.map((ep) => {
+            if (thumbnailsMap[ep.id]) {
+              return { ...ep, thumbnailCustomImage: thumbnailsMap[ep.id] };
+            }
+            return ep;
+          }),
+        };
+      })
+    );
+  };
+
+  const handleBatchApplyPrompts = (promptsMap: Record<number, string>) => {
+    setSeriesList((prevSeries) =>
+      prevSeries.map((series) => {
+        if (series.id !== activeSeries.id) return series;
+        return {
+          ...series,
+          episodes: series.episodes.map((ep) => {
+            if (promptsMap[ep.id]) {
+              return { ...ep, suggestedThumbnailPrompt: promptsMap[ep.id] };
+            }
+            return ep;
+          }),
+        };
+      })
+    );
+  };
+
+  const handleAddSeries = (newSeries: PlaythroughSeries) => {
+    setSeriesList((prev) => [newSeries, ...prev]);
+    setActiveSeriesId(newSeries.id);
+    if (currentUser) {
+      saveUserSeries(currentUser.uid, newSeries);
+    }
+  };
+
+  const handleDeleteSeries = (id: string) => {
+    if (seriesList.length <= 1) {
+      alert("You must keep at least one playthrough series in your catalog.");
+      return;
+    }
+    const remaining = seriesList.filter((s) => s.id !== id);
+    setSeriesList(remaining);
+    if (activeSeriesId === id) {
+      setActiveSeriesId(remaining[0].id);
+    }
+    if (currentUser) {
+      deleteUserSeries(currentUser.uid, id);
+    }
+  };
+
   const handleAddEpisode = (newEpisode: Episode) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
@@ -482,72 +367,64 @@ export default function App() {
     );
   };
 
-  // Duplicate episode handler
-  const handleDuplicateEpisode = (episodeToDuplicate: Episode) => {
-    const maxPart = Math.max(...episodes.map((e) => e.partNumber), 0);
-    const nextPartNumber = maxPart > 0 ? maxPart + 1 : episodeToDuplicate.partNumber + 1;
-    const clonedEpisode: Episode = {
-      ...episodeToDuplicate,
-      id: Date.now(),
-      partNumber: nextPartNumber,
-      title: episodeToDuplicate.title.includes("#")
-        ? episodeToDuplicate.title.replace(/#\d+/, `#${nextPartNumber < 10 ? "0" + nextPartNumber : nextPartNumber}`)
-        : `${episodeToDuplicate.title} (Part ${nextPartNumber})`,
-      shortTitle: `${episodeToDuplicate.shortTitle.split("(Part")[0].trim()} (Part ${nextPartNumber})`,
-      status: "not_started",
-    };
-
+  const handleDeleteEpisode = (id: number) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: [...series.episodes, clonedEpisode],
+              episodes: series.episodes.filter((ep) => ep.id !== id),
             }
           : series
       )
     );
+    if (selectedEpisode?.id === id) {
+      setSelectedEpisode(null);
+    }
   };
 
-  // Delete single episode handler
-  const handleDeleteEpisode = (episodeIdToDelete: number) => {
+  const handleUpdateSeriesLogo = (seriesId: string, logoUrl: string | undefined, useTitleLogo: boolean) => {
     setSeriesList((prevSeries) =>
-      prevSeries.map((series) =>
-        series.id === activeSeries.id
+      prevSeries.map((s) =>
+        s.id === seriesId
           ? {
-              ...series,
-              episodes: series.episodes.filter((ep) => ep.id !== episodeIdToDelete),
+              ...s,
+              gameLogoUrl: logoUrl,
+              useTitleLogo: useTitleLogo,
             }
-          : series
+          : s
       )
     );
   };
 
-  // Handle target length switch - adjusts display estimates dynamically
-  const handleSetTargetLength = (length: number) => {
-    setTargetLength(length);
+  const handleUpdateSeriesSynopsis = (seriesId: string, synopsis: string, source?: string) => {
     setSeriesList((prevSeries) =>
-      prevSeries.map((series) =>
-        series.id === activeSeries.id
+      prevSeries.map((s) =>
+        s.id === seriesId
           ? {
-              ...series,
-              episodes: series.episodes.map((ep) => {
-                const factor = length / 90;
-                const adjustedMins = Math.round(
-                  ep.estDurationMinutes * (factor > 1.2 ? 1.15 : factor < 0.8 ? 0.85 : 1)
-                );
-                return {
-                  ...ep,
-                  estDurationMinutes: adjustedMins,
-                };
-              }),
+              ...s,
+              synopsis: synopsis,
+              synopsisSource: source || s.synopsisSource,
             }
-          : series
+          : s
       )
     );
   };
 
-  // Apply branding changes to all episodes in active series
+  const handleOpenThumbnailStudio = (episodeId?: number) => {
+    setThumbnailEpisodeId(episodeId);
+    setShowThumbnailStudio(true);
+  };
+
+  const handleOpenRecordingTimer = (episode?: Episode) => {
+    setRecordingTimerInitialEpisode(episode);
+    setShowRecordingTimer(true);
+  };
+
+  const handleSetTargetLength = (len: number) => {
+    setTargetLength(len);
+  };
+
   const handleApplyBrandingToAll = (updatedEpisodes: Episode[]) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
@@ -561,29 +438,24 @@ export default function App() {
     );
   };
 
-  // Update playthrough type handler
   const handleUpdatePlaythroughType = (seriesId: string, newType: string) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((s) => (s.id === seriesId ? { ...s, playthroughType: newType } : s))
     );
   };
 
-  // Import / restore series list handler
   const handleImportSeriesList = (imported: PlaythroughSeries[]) => {
     setSeriesList(imported);
     if (imported.length > 0) {
       setActiveSeriesId(imported[0].id);
+      if (currentUser) {
+        for (const s of imported) {
+          saveUserSeries(currentUser.uid, s);
+        }
+      }
     }
   };
 
-  // Update active series accent color handler
-  const handleUpdateSeriesAccentColor = (newColor: string) => {
-    setSeriesList((prevSeries) =>
-      prevSeries.map((s) => (s.id === activeSeries.id ? { ...s, accentColor: newColor } : s))
-    );
-  };
-
-  // 10 New Studio Tools Handlers
   const handleUpdateEpisodeChapters = (epId: number, chapters: any[]) => {
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
@@ -629,6 +501,20 @@ export default function App() {
 
   const themeConfig = THEME_CONFIGS[currentTheme] || THEME_CONFIGS.midnight;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#07090e] flex flex-col items-center justify-center text-white space-y-4">
+        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-zinc-400">Loading Playthrough Studio Cloud...</p>
+      </div>
+    );
+  }
+
+  // Multi-user authentication check: show Login/Register if not authenticated
+  if (!currentUser) {
+    return <AuthModal initialMode="login" />;
+  }
+
   const isHudMode = typeof window !== "undefined" && window.location.search.includes("hud=true");
 
   if (isHudMode) {
@@ -643,6 +529,13 @@ export default function App() {
     <div
       className={`theme-transition min-h-screen ${themeConfig.classes.rootBg} ${themeConfig.classes.textPrimary} font-sans selection:bg-blue-500/30 selection:text-blue-200 antialiased`}
     >
+      {/* Top User Multi-Account Bar */}
+      <UserDashboardHeader
+        seriesList={seriesList}
+        onOpenSettings={() => setShowAccountSettingsModal(true)}
+        onOpenNewSeries={() => setShowNewSeriesModal(true)}
+      />
+
       {/* Header Bar */}
       <Header
         seriesList={seriesList}
@@ -723,102 +616,89 @@ export default function App() {
           />
         ) : (
           <EpisodeList
+            series={activeSeries}
             episodes={episodes}
-            gameTitle={activeSeries.gameTitle}
-            activeSeries={activeSeries}
+            targetLength={targetLength}
             onSelectEpisode={(ep) => setSelectedEpisode(ep)}
             onUpdateStatus={handleUpdateStatus}
-            onOpenAddEpisode={() => setShowAddEpisodeModal(true)}
-            onDuplicateEpisode={handleDuplicateEpisode}
-            onDeleteEpisode={handleDeleteEpisode}
-            onOpenRecordingTimer={(ep) => handleOpenRecordingTimer(ep)}
-            onOpenYouTubeStudio={() => setShowYouTubeStudioModal(true)}
+            onOpenThumbnailStudio={handleOpenThumbnailStudio}
+            onOpenRecordingTimer={handleOpenRecordingTimer}
+            onOpenAddEpisodeModal={() => setShowAddEpisodeModal(true)}
+            onOpenBossLootCatalog={() => setShowBossLootCatalog(true)}
+            onOpenProtagonistDB={() => setShowProtagonistDB(true)}
+            onOpenQuestBranchTracker={() => setShowQuestBranchTracker(true)}
+            onUpdateQuests={handleUpdateQuests}
             onUpdateSeriesSynopsis={handleUpdateSeriesSynopsis}
           />
         )}
       </main>
 
-      {/* Episode Detail & YouTube Studio Modal */}
+      {/* Account Settings Modal */}
+      <AccountSettingsModal
+        isOpen={showAccountSettingsModal}
+        onClose={() => setShowAccountSettingsModal(false)}
+        currentTheme={currentTheme}
+        onSelectTheme={handleSelectTheme}
+        seriesList={seriesList}
+        activeSeriesId={activeSeriesId}
+        onSelectSeries={handleSelectSeries}
+        onOpenPlaythroughView={() => setCurrentView("playthrough")}
+        onSelectEpisode={(ep) => setSelectedEpisode(ep)}
+        onOpenNewSeriesModal={() => setShowNewSeriesModal(true)}
+      />
+
+      {/* Modals & Dialogs */}
       {selectedEpisode && (
         <EpisodeDetailModal
           episode={selectedEpisode}
-          activeSeries={activeSeries}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
           onClose={() => setSelectedEpisode(null)}
           onUpdateEpisode={handleUpdateEpisode}
-        />
-      )}
-
-      {/* Strategy & SEO Guide Modal */}
-      {showGuide && (
-        <StrategyGuide
-          onClose={() => setShowGuide(false)}
-          activeSeries={activeSeries}
-          episodes={episodes}
-          onBatchUpdateEpisodes={handleBatchUpdateEpisodes}
-          onUpdateEpisode={handleUpdateEpisode}
-        />
-      )}
-
-      {/* Playlist Export Modal */}
-      {showExport && (
-        <ExportModal
-          episodes={episodes}
-          onClose={() => setShowExport(false)}
-          onOpenPrintCheatSheet={() => setShowPrintCheatSheet(true)}
-        />
-      )}
-
-      {/* Print / PDF Playthrough Cheat Sheet Modal */}
-      {showPrintCheatSheet && (
-        <PrintCheatSheetModal
-          series={activeSeries}
-          episodes={episodes}
-          onClose={() => setShowPrintCheatSheet(false)}
-        />
-      )}
-
-      {/* Live Playthrough Recording Session Timer Modal */}
-      <RecordingTimerModal
-        isOpen={showRecordingTimerModal}
-        onClose={() => setShowRecordingTimerModal(false)}
-        activeSeries={activeSeries}
-        episodes={episodes}
-        onUpdateEpisode={handleUpdateEpisode}
-        onUpdateStatus={handleUpdateStatus}
-        initialEpisodeId={recordingTimerEpisodeId}
-        onOpenMirillisActionModal={() => setShowMirillisActionModal(true)}
-      />
-
-      {/* Mirillis Action! Studio Integration Modal */}
-      <MirillisActionIntegrationModal
-        isOpen={showMirillisActionModal}
-        onClose={() => setShowMirillisActionModal(false)}
-        activeSeries={activeSeries}
-        episodes={episodes}
-      />
-
-      {/* YouTube Thumbnail Studio Modal */}
-      {showThumbnailStudio && (
-        <ThumbnailGeneratorModal
-          episodes={episodes}
-          activeSeries={activeSeries}
-          defaultEpisodeId={thumbnailEpisodeId}
-          onClose={() => setShowThumbnailStudio(false)}
-          onApplyThumbnail={handleApplyThumbnail}
-        />
-      )}
-
-      {/* Batch Thumbnail Exporter & Custom Branding Presets Modal */}
-      {showBatchThumbnailExporter && (
-        <BatchThumbnailExporterModal
-          episodes={episodes}
-          activeSeries={activeSeries}
-          onClose={() => setShowBatchThumbnailExporter(false)}
+          onDeleteEpisode={handleDeleteEpisode}
+          onOpenThumbnailStudio={() => handleOpenThumbnailStudio(selectedEpisode.id)}
+          onOpenRecordingTimer={() => handleOpenRecordingTimer(selectedEpisode)}
+          allEpisodes={episodes}
           onApplyBrandingToAll={handleApplyBrandingToAll}
         />
       )}
 
-      {/* 100% Completion Boss & Loot Catalog Modal */}
+      {showGuide && (
+        <StrategyGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
+      )}
+
+      {showExport && (
+        <ExportModal
+          isOpen={showExport}
+          onClose={() => setShowExport(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          episodes={episodes}
+        />
+      )}
+
+      {showThumbnailStudio && (
+        <ThumbnailGeneratorModal
+          isOpen={showThumbnailStudio}
+          onClose={() => setShowThumbnailStudio(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesCoverImage={activeSeries?.coverImage}
+          seriesLogoUrl={activeSeries?.gameLogoUrl}
+          episodes={episodes}
+          initialEpisodeId={thumbnailEpisodeId}
+          onApplyThumbnail={handleApplyThumbnail}
+          onBatchApplyThumbnails={handleBatchApplyThumbnails}
+        />
+      )}
+
+      {showBatchThumbnailExporter && (
+        <BatchThumbnailExporterModal
+          isOpen={showBatchThumbnailExporter}
+          onClose={() => setShowBatchThumbnailExporter(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          episodes={episodes}
+        />
+      )}
+
       {showBossLootCatalog && (
         <BossLootCatalogModal
           activeSeries={activeSeries}
@@ -826,198 +706,244 @@ export default function App() {
         />
       )}
 
-      {/* Quick Boss Weakness Cards Modal */}
       {showBossWeaknessCards && (
         <BossWeaknessCardsModal
-          activeSeries={activeSeries}
+          isOpen={showBossWeaknessCards}
           onClose={() => setShowBossWeaknessCards(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
+          episodes={episodes}
         />
       )}
 
-      {/* Character & Protagonist Database Modal */}
       {showProtagonistDB && (
         <ProtagonistDBModal
+          isOpen={showProtagonistDB}
           onClose={() => setShowProtagonistDB(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
         />
       )}
 
-      {/* Side Quest & Main Story Branching Tracker Modal */}
       {showQuestBranchTracker && (
         <QuestBranchTrackerModal
-          gameTitle={activeSeries.gameTitle}
-          episodes={episodes}
+          isOpen={showQuestBranchTracker}
+          onClose={() => setShowQuestBranchTracker(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
           quests={activeQuests}
           onUpdateQuests={handleUpdateQuests}
-          onClose={() => setShowQuestBranchTracker(false)}
         />
       )}
 
-      {/* 10 Studio Tools Upgrades Modals */}
-      <CtrPredictorModal
-        isOpen={showCtrPredictor}
-        onClose={() => setShowCtrPredictor(false)}
-        episodes={episodes}
-        selectedEpisode={selectedEpisode}
-      />
-
-      <ChapterManagerModal
-        isOpen={showChapterManager}
-        onClose={() => setShowChapterManager(false)}
-        episodes={episodes}
-        onUpdateEpisodeChapters={handleUpdateEpisodeChapters}
-      />
-
-      <SoundcheckModal
-        isOpen={showSoundcheck}
-        onClose={() => setShowSoundcheck(false)}
-      />
-
-      <AiPromptCrafterModal
-        isOpen={showAiPromptCrafter}
-        onClose={() => setShowAiPromptCrafter(false)}
-        episodes={episodes}
-        selectedEpisode={selectedEpisode}
-      />
-
-      <EndScreenPlannerModal
-        isOpen={showEndScreenPlanner}
-        onClose={() => setShowEndScreenPlanner(false)}
-        episodes={episodes}
-        selectedEpisode={selectedEpisode}
-      />
-
-      <KeyItemsTrackerModal
-        isOpen={showKeyItemsTracker}
-        onClose={() => setShowKeyItemsTracker(false)}
-        series={activeSeries}
-      />
-
-      <ShortsClipperModal
-        isOpen={showShortsClipper}
-        onClose={() => setShowShortsClipper(false)}
-        episodes={episodes}
-        selectedEpisode={selectedEpisode}
-      />
-
-      <ThumbnailPresetModal
-        isOpen={showThumbnailPresetStudio}
-        onClose={() => setShowThumbnailPresetStudio(false)}
-        selectedEpisode={selectedEpisode || episodes[0]}
-        onApplyPreset={handleApplyThumbnailPreset}
-      />
-
-      <BatchEpisodeEditorModal
-        isOpen={showBatchEpisodeEditor}
-        onClose={() => setShowBatchEpisodeEditor(false)}
-        episodes={episodes}
-        onBatchUpdateEpisodes={handleBatchUpdateEpisodes}
-      />
-
-      <YouTubeStudioUploadModal
-        isOpen={showYouTubeStudioModal}
-        onClose={() => setShowYouTubeStudioModal(false)}
-        series={activeSeries}
-        episodes={episodes}
-        onUpdateEpisodeStatus={handleUpdateStatus}
-        onUpdateEpisode={handleUpdateEpisode}
-        onBatchUpdateEpisodes={handleBatchUpdateEpisodes}
-        onOpenThumbnailStudio={(epId) => {
-          setThumbnailEpisodeId(epId);
-          setShowThumbnailStudio(true);
-        }}
-      />
-
-      {/* Feature 2: Boss Encounter & Retry Tactics Planner Modal */}
-      {showBossEncounterPlanner && (
-        <BossEncounterPlannerModal
-          activeSeries={activeSeries}
-          onClose={() => setShowBossEncounterPlanner(false)}
-        />
-      )}
-
-      {/* Feature 5: Series Progress & 100% Completion Dashboard Modal */}
-      {showCompletionDashboard && (
-        <CompletionDashboardModal
-          activeSeries={activeSeries}
-          episodes={episodes}
-          quests={activeQuests}
-          onClose={() => setShowCompletionDashboard(false)}
-        />
-      )}
-
-      {/* Theme & Palette Switcher Modal */}
-      {showThemeSwitcherModal && (
-        <ThemeSwitcherModal
-          currentTheme={currentTheme}
-          onSelectTheme={handleSelectTheme}
-          activeSeries={activeSeries}
-          onUpdateSeriesAccentColor={handleUpdateSeriesAccentColor}
-          onClose={() => setShowThemeSwitcherModal(false)}
-        />
-      )}
-
-      {/* New Playthrough Series Modal */}
       {showNewSeriesModal && (
         <NewSeriesModal
+          isOpen={showNewSeriesModal}
           onClose={() => setShowNewSeriesModal(false)}
           onAddSeries={handleAddSeries}
         />
       )}
 
-      {/* Add New Episode Modal */}
       {showAddEpisodeModal && (
         <AddEpisodeModal
-          currentEpisodesCount={episodes.length}
-          gameTitle={activeSeries.gameTitle}
-          episodes={episodes}
+          isOpen={showAddEpisodeModal}
           onClose={() => setShowAddEpisodeModal(false)}
+          nextPartNumber={episodes.length + 1}
           onAddEpisode={handleAddEpisode}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
         />
       )}
 
-      {/* Milestone Celebration Pop-up Modal */}
-      <MilestoneCelebrationModal
-        isOpen={!!activeCelebrationMilestone}
-        milestone={activeCelebrationMilestone}
-        series={activeSeries}
-        episodes={episodes}
-        onClose={() => {
-          if (activeCelebrationMilestone) {
-            setMilestoneHistory((prev) => {
-              const updated = prev.map((m) =>
-                m.id === activeCelebrationMilestone.id ? { ...m, viewed: true } : m
-              );
-              safeSetLocalStorage("youtube_series_milestones", updated);
-              return updated;
-            });
-          }
-          setActiveCelebrationMilestone(null);
-        }}
-        onOpenExport={() => setShowExport(true)}
-      />
+      {showGameTitleLogoModal && (
+        <GameTitleLogoModal
+          isOpen={showGameTitleLogoModal}
+          onClose={() => setShowGameTitleLogoModal(false)}
+          series={activeSeries}
+          onUpdateSeriesLogo={handleUpdateSeriesLogo}
+        />
+      )}
 
-      {/* Game Title Logo Settings Modal */}
-      <GameTitleLogoModal
-        isOpen={showGameTitleLogoModal}
-        onClose={() => setShowGameTitleLogoModal(false)}
-        seriesList={seriesList}
-        activeSeriesId={activeSeriesId}
-        onUpdateSeriesLogo={handleUpdateSeriesLogo}
-      />
+      {showThemeSwitcherModal && (
+        <ThemeSwitcherModal
+          isOpen={showThemeSwitcherModal}
+          onClose={() => setShowThemeSwitcherModal(false)}
+          currentTheme={currentTheme}
+          onSelectTheme={handleSelectTheme}
+        />
+      )}
 
-      {/* Subtle Toast Notification */}
-      <ToastNotification toast={toast} onClose={() => setToast(null)} />
+      {/* 10 Advanced Tools Modals */}
+      {showCtrPredictor && (
+        <CtrPredictorModal
+          isOpen={showCtrPredictor}
+          onClose={() => setShowCtrPredictor(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+        />
+      )}
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 bg-[#070708] py-8 px-4 text-center text-xs text-zinc-500">
-        <div className="max-w-7xl mx-auto space-y-2">
-          <p className="font-semibold text-zinc-400">
-            {activeSeries.gameTitle} • YouTube Let's Play Studio & Playlist Planner
-          </p>
-          <p>Designed for content creators & YouTube Gaming channels. High-CTR thumbnails, chapter timestamps & batch export.</p>
-        </div>
-      </footer>
+      {showChapterManager && (
+        <ChapterManagerModal
+          isOpen={showChapterManager}
+          onClose={() => setShowChapterManager(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          onUpdateEpisodeChapters={handleUpdateEpisodeChapters}
+        />
+      )}
+
+      {showSoundcheck && (
+        <SoundcheckModal
+          isOpen={showSoundcheck}
+          onClose={() => setShowSoundcheck(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+        />
+      )}
+
+      {showAiPromptCrafter && (
+        <AiPromptCrafterModal
+          isOpen={showAiPromptCrafter}
+          onClose={() => setShowAiPromptCrafter(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          onBatchApplyPrompts={handleBatchApplyPrompts}
+        />
+      )}
+
+      {showEndScreenPlanner && (
+        <EndScreenPlannerModal
+          isOpen={showEndScreenPlanner}
+          onClose={() => setShowEndScreenPlanner(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+        />
+      )}
+
+      {showKeyItemsTracker && (
+        <KeyItemsTrackerModal
+          isOpen={showKeyItemsTracker}
+          onClose={() => setShowKeyItemsTracker(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
+        />
+      )}
+
+      {showShortsClipper && (
+        <ShortsClipperModal
+          isOpen={showShortsClipper}
+          onClose={() => setShowShortsClipper(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+        />
+      )}
+
+      {showThumbnailPresetStudio && (
+        <ThumbnailPresetModal
+          isOpen={showThumbnailPresetStudio}
+          onClose={() => setShowThumbnailPresetStudio(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          onApplyThumbnailPreset={handleApplyThumbnailPreset}
+        />
+      )}
+
+      {showBatchEpisodeEditor && (
+        <BatchEpisodeEditorModal
+          isOpen={showBatchEpisodeEditor}
+          onClose={() => setShowBatchEpisodeEditor(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          onUpdateEpisodes={handleBatchUpdateEpisodes}
+        />
+      )}
+
+      {showPrintCheatSheet && (
+        <PrintCheatSheetModal
+          isOpen={showPrintCheatSheet}
+          onClose={() => setShowPrintCheatSheet(false)}
+          series={activeSeries}
+          episodes={episodes}
+          quests={activeQuests}
+        />
+      )}
+
+      {showRecordingTimer && (
+        <RecordingTimerModal
+          isOpen={showRecordingTimer}
+          onClose={() => setShowRecordingTimer(false)}
+          episodes={episodes}
+          initialEpisode={recordingTimerInitialEpisode}
+          onUpdateEpisodeStatus={handleUpdateStatus}
+        />
+      )}
+
+      {showMirillisActionModal && (
+        <MirillisActionIntegrationModal
+          isOpen={showMirillisActionModal}
+          onClose={() => setShowMirillisActionModal(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          episodes={episodes}
+        />
+      )}
+
+      {showYouTubeStudioModal && (
+        <YouTubeStudioUploadModal
+          isOpen={showYouTubeStudioModal}
+          onClose={() => setShowYouTubeStudioModal(false)}
+          episodes={episodes}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+        />
+      )}
+
+      {showBossEncounterPlanner && (
+        <BossEncounterPlannerModal
+          isOpen={showBossEncounterPlanner}
+          onClose={() => setShowBossEncounterPlanner(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
+          episodes={episodes}
+        />
+      )}
+
+      {showCompletionDashboard && (
+        <CompletionDashboardModal
+          isOpen={showCompletionDashboard}
+          onClose={() => setShowCompletionDashboard(false)}
+          seriesTitle={activeSeries?.gameTitle || "Game Series"}
+          seriesId={activeSeries?.id || "default"}
+          episodes={episodes}
+          quests={activeQuests}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <ToastNotification toast={toast} onClose={() => setToast(null)} />
+      )}
+
+      {/* Gamerscore Achievement Toast */}
+      {achievementToast && (
+        <AchievementToast
+          toast={achievementToast}
+          onClose={() => setAchievementToast(null)}
+        />
+      )}
+
+      {/* Milestone Celebration Modal */}
+      {activeCelebrationMilestone && (
+        <MilestoneCelebrationModal
+          milestoneRecord={activeCelebrationMilestone}
+          onClose={() => setActiveCelebrationMilestone(null)}
+        />
+      )}
     </div>
   );
 }
 
+export default function App() {
+  return (
+    <AuthProvider>
+      <PlaythroughStudioApp />
+    </AuthProvider>
+  );
+}

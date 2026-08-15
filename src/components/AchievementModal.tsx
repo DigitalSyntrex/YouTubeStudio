@@ -165,7 +165,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-black text-white flex items-center gap-2">
-                STUDIO POINTS & TROPHIES
+                CREATOR GAMER POINTS & TROPHIES
               </h2>
               <p className="text-xs text-slate-400">
                 Track production milestones, YouTube optimizations, and creator achievements
@@ -191,12 +191,12 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
               </div>
               <div>
                 <span className="text-xs uppercase tracking-wider text-slate-400 font-bold">
-                  Total Points
+                  Total Gamer Points
                 </span>
                 <div className="text-2xl font-black text-amber-300 flex items-baseline gap-1">
                   <span>{stats.unlockedScore.toLocaleString()}</span>
                   <span className="text-xs text-slate-400 font-normal">
-                    / {stats.totalScore.toLocaleString()} PTS
+                    / {stats.totalScore.toLocaleString()} GP
                   </span>
                 </div>
               </div>
@@ -382,7 +382,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
                         }`}
                       >
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>+{ach.points} PTS</span>
+                        <span>+{ach.points} GP</span>
                       </div>
                     </div>
 
