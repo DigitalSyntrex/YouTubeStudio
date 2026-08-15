@@ -77,10 +77,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [isPlaylistsMinimized, setIsPlaylistsMinimized] = useState<boolean>(() => {
     return localStorage.getItem("yt_playlists_minimized") === "true";
   });
+  const [isShowcaseMinimized, setIsShowcaseMinimized] = useState<boolean>(() => {
+    return localStorage.getItem("yt_showcase_minimized") === "true";
+  });
 
   useEffect(() => {
     localStorage.setItem("yt_playlists_minimized", isPlaylistsMinimized.toString());
   }, [isPlaylistsMinimized]);
+
+  useEffect(() => {
+    localStorage.setItem("yt_showcase_minimized", isShowcaseMinimized.toString());
+  }, [isShowcaseMinimized]);
 
   const activeSeries = (seriesList || []).find((s) => s?.id === activeSeriesId) || seriesList?.[0];
 
@@ -446,52 +453,86 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Highlight Section: Completed Playlists */}
       {completedSeriesList.length > 0 && (
-        <section className="bg-gradient-to-r from-emerald-950/30 via-[#0d1017] to-[#0a0d14] border border-emerald-500/30 rounded-3xl p-6 sm:p-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                <Trophy className="w-5 h-5" />
+        <section className="bg-gradient-to-r from-emerald-950/30 via-[#0d1017] to-[#0a0d14] border border-emerald-500/30 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-950/30 space-y-0 transition-all duration-300">
+          {/* Header Bar with Minimize & Expand */}
+          <div className="px-5 sm:px-6 py-3.5 bg-[#090b10]/95 border-b border-emerald-500/20 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                <Trophy className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-xl font-black text-white">Completed Let's Play Series Showcase</h3>
-                <p className="text-xs text-zinc-400">Fully finished walkthroughs ready for YouTube playlist publishing.</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black text-white truncate">
+                    Completed Let's Play Series Showcase
+                  </h3>
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                    {completedSeriesList.length} Finished
+                  </span>
+                </div>
+                {!isShowcaseMinimized && (
+                  <p className="text-xs text-zinc-400 hidden sm:block">
+                    Fully finished walkthroughs ready for YouTube playlist publishing and metadata export.
+                  </p>
+                )}
               </div>
             </div>
+
+            <button
+              onClick={() => setIsShowcaseMinimized(!isShowcaseMinimized)}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-lg text-xs font-bold border border-amber-500/30 transition-all cursor-pointer shrink-0"
+              title={isShowcaseMinimized ? "Expand Completed Let's Play Series Showcase Window" : "Minimize Completed Let's Play Series Showcase Window"}
+            >
+              {isShowcaseMinimized ? (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Expand</span>
+                </>
+              ) : (
+                <>
+                  <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Minimize</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {completedSeriesList.map((cs) => {
-              const totalHours = getSeriesTotalHours(cs.episodes);
-              return (
-                <div
-                  key={cs.id}
-                  className="bg-[#090b10] border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">
-                        100% Completed
-                      </span>
-                      <span className="text-xs font-mono text-zinc-400">{cs.episodes.length} Episodes</span>
+          {!isShowcaseMinimized && (
+            <div className="p-5 sm:p-7 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {completedSeriesList.map((cs) => {
+                  const totalHours = getSeriesTotalHours(cs.episodes);
+                  return (
+                    <div
+                      key={cs.id}
+                      className="bg-[#090b10] border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 hover:border-emerald-500/50 transition-colors shadow-sm"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">
+                            100% Completed
+                          </span>
+                          <span className="text-xs font-mono text-zinc-400">{cs.episodes.length} Episodes</span>
+                        </div>
+                        <h4 className="text-base font-extrabold text-white truncate">{cs.gameTitle}</h4>
+                        <p className="text-xs text-zinc-400 truncate">Total duration: ~{totalHours} hrs • All chapters & thumbnails logged</p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          onSelectSeries(cs.id);
+                          onOpenExport();
+                        }}
+                        className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                      >
+                        <Download className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Export Metadata</span>
+                      </button>
                     </div>
-                    <h4 className="text-base font-extrabold text-white">{cs.gameTitle}</h4>
-                    <p className="text-xs text-zinc-400">Total duration: ~{totalHours} hrs • All chapters & thumbnails logged</p>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      onSelectSeries(cs.id);
-                      onOpenExport();
-                    }}
-                    className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Export Metadata</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>

@@ -146,27 +146,27 @@ export const AddEpisodeModal: React.FC<AddEpisodeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#121212] border border-white/10 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-5 bg-[#09090b] border-b border-white/10 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden animate-in fade-in duration-200">
+      <div className="bg-[#121212] border border-blue-500/30 w-full max-w-lg rounded-2xl shadow-2xl shadow-blue-950/80 max-h-[92vh] flex flex-col relative overflow-hidden">
+        <div className="p-4 sm:p-5 bg-[#09090b] border-b border-white/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
               <Play className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-zinc-100">Add Episode #{nextPart}</h2>
+              <h2 className="text-base sm:text-lg font-bold text-zinc-100">Add Episode #{nextPart}</h2>
               <p className="text-xs text-zinc-400">{gameTitle} Playthrough</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white bg-[#18181b] hover:bg-[#27272a] rounded-lg transition-colors border border-white/10"
+            className="p-1.5 text-zinc-400 hover:text-white bg-[#18181b] hover:bg-[#27272a] rounded-lg transition-colors border border-white/10 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1">YouTube Title *</label>
             <input

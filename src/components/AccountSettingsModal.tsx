@@ -23,6 +23,8 @@ import {
   Volume2,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Youtube,
   Layers,
   HardDrive,
@@ -85,15 +87,18 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [recordingRes, setRecordingRes] = useState(userProfile?.recordingResolution || "4K 60fps (3840x2160)");
   const [audioBitrate, setAudioBitrate] = useState(userProfile?.recordingAudioBitrate || "320 kbps (Studio Quality)");
   const [selectedTheme, setSelectedTheme] = useState<AppThemeId>(currentTheme);
+  const [avatarCategory, setAvatarCategory] = useState<string>("all");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Achievements state
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [achievementFilter, setAchievementFilter] = useState<"all" | "unlocked" | "locked">("all");
+  const [showAllSeries, setShowAllSeries] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setShowAllSeries(false);
       setAchievements(loadAchievements());
       setDisplayName(userProfile?.displayName || "");
       setBio(userProfile?.bio || "");
@@ -199,17 +204,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#0a0d16] border border-blue-500/30 rounded-3xl max-w-4xl w-full p-5 sm:p-7 space-y-6 shadow-2xl shadow-blue-950/90 relative max-h-[92vh] flex flex-col">
+      <div className="bg-[#0a0d16] border border-blue-500/30 rounded-3xl max-w-5xl w-full p-4 sm:p-6 lg:p-7 space-y-5 shadow-2xl shadow-blue-950/90 relative max-h-[92vh] flex flex-col">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors z-10"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Creator Hero Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10 pr-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 sm:pb-4 border-b border-white/10 pr-8 sm:pr-10">
           <div className="flex items-center gap-3.5">
             <div className="relative group">
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-700 border-2 border-blue-400/50 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-900/40">
@@ -257,54 +262,54 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 border-b border-white/10 pb-2 overflow-x-auto scrollbar-none">
+        {/* Navigation Tabs - Responsive Grid layout so no tabs are cut off */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 border-b border-white/10 pb-3">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`w-full justify-center px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-center ${
               activeTab === "overview"
                 ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                : "text-zinc-400 hover:text-white hover:bg-white/5"
+                : "text-zinc-400 hover:text-white hover:bg-white/5 bg-[#070a12]/60 border border-white/5"
             }`}
           >
-            <Gamepad2 className="w-3.5 h-3.5" />
-            Dashboard & Playthroughs
+            <Gamepad2 className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Dashboard & Series</span>
           </button>
 
           <button
             onClick={() => setActiveTab("achievements")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`w-full justify-center px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-center ${
               activeTab === "achievements"
                 ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-                : "text-zinc-400 hover:text-white hover:bg-white/5"
+                : "text-zinc-400 hover:text-white hover:bg-white/5 bg-[#070a12]/60 border border-white/5"
             }`}
           >
-            <Trophy className="w-3.5 h-3.5 text-amber-300" />
-            Achievements ({gamerscore.unlockedCount}/{gamerscore.totalCount})
+            <Trophy className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span className="truncate">Achievements ({gamerscore.unlockedCount}/{gamerscore.totalCount})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("profile")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`w-full justify-center px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-center ${
               activeTab === "profile"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                : "text-zinc-400 hover:text-white hover:bg-white/5"
+                : "text-zinc-400 hover:text-white hover:bg-white/5 bg-[#070a12]/60 border border-white/5"
             }`}
           >
-            <User className="w-3.5 h-3.5" />
-            Creator Profile & Branding
+            <User className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Profile & Branding</span>
           </button>
 
           <button
             onClick={() => setActiveTab("preferences")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`w-full justify-center px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-center ${
               activeTab === "preferences"
                 ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
-                : "text-zinc-400 hover:text-white hover:bg-white/5"
+                : "text-zinc-400 hover:text-white hover:bg-white/5 bg-[#070a12]/60 border border-white/5"
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
-            Studio Preferences & Cloud
+            <Sliders className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Preferences & Cloud</span>
           </button>
         </div>
 
@@ -469,23 +474,44 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                     <Layers className="w-3.5 h-3.5 text-blue-400" />
                     All Series in Your Catalog ({seriesList.length})
                   </h4>
-                  {onOpenNewSeriesModal && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        onOpenNewSeriesModal();
-                      }}
-                      className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add New Series
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2.5">
+                    {seriesList.length > 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllSeries(!showAllSeries)}
+                        className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        {showAllSeries ? (
+                          <>
+                            <ChevronUp className="w-3.5 h-3.5" />
+                            <span>Show Top 4</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>View All ({seriesList.length})</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {onOpenNewSeriesModal && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenNewSeriesModal();
+                        }}
+                        className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add New Series
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {seriesList.map((s) => {
+                  {(showAllSeries ? seriesList : seriesList.slice(0, 4)).map((s) => {
                     const isSelected = s.id === activeSeriesId;
                     const pubCount = s.episodes?.filter((e) => e.status === "published").length || 0;
                     const totalEp = s.episodes?.length || 0;
@@ -534,6 +560,29 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                     );
                   })}
                 </div>
+
+                {/* Show More / Show Less Button if more than 4 series exist */}
+                {seriesList.length > 4 && (
+                  <div className="flex justify-center pt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllSeries(!showAllSeries)}
+                      className="px-4 py-2 rounded-xl bg-[#06080e] hover:bg-[#121c35] text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-400/50 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                    >
+                      {showAllSeries ? (
+                        <>
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          <span>Show Less (Displaying 4 of {seriesList.length} series)</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>Show More Series ({seriesList.length - 4} remaining)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -735,52 +784,87 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 </div>
 
                 {/* Preset Avatars */}
-                <div className="pt-2 border-t border-white/10 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-zinc-400 font-semibold">Select Default Creator Avatar ({(PRESET_AVATARS || []).length} available):</span>
+                <div className="pt-3 border-t border-white/10 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-wider">
+                        Select Default Creator Avatar ({(PRESET_AVATARS || []).length} available):
+                      </span>
+                    </div>
                     {avatarUrl && (PRESET_AVATARS || []).some((p) => p.url === avatarUrl) && (
-                      <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">
-                        Active: {(PRESET_AVATARS || []).find((p) => p.url === avatarUrl)?.name}
+                      <span className="text-[11px] text-cyan-300 font-bold bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md self-start sm:self-auto">
+                        Active: {(PRESET_AVATARS || []).find((p) => p.url === avatarUrl)?.name} • {(PRESET_AVATARS || []).find((p) => p.url === avatarUrl)?.role}
                       </span>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2">
-                    {(PRESET_AVATARS || []).map((preset) => {
-                      const isSelected = avatarUrl === preset.url;
-                      return (
-                        <button
-                          key={preset.id || preset.name}
-                          type="button"
-                          onClick={() => handleSelectPresetAvatar(preset.url)}
-                          className={`group p-1.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center ${
-                            isSelected
-                              ? "border-blue-400 ring-2 ring-blue-500/50 bg-blue-500/20 shadow-md shadow-blue-500/20"
-                              : "border-white/10 hover:border-white/30 bg-[#0a0f1d]/60 hover:bg-[#0f172a]"
-                          }`}
-                          title={`${preset.name} • ${preset.role || "Avatar"}`}
-                        >
-                          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform bg-black/40">
-                            <img
-                              src={preset.url}
-                              alt={preset.name}
-                              className="w-full h-full object-cover"
-                            />
-                            {isSelected && (
-                              <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
-                                <Check className="w-4 h-4 text-white drop-shadow-md stroke-[3]" />
-                              </div>
-                            )}
-                          </div>
-                          <span
-                            className={`text-[10px] font-bold truncate max-w-full ${
-                              isSelected ? "text-blue-300" : "text-zinc-400 group-hover:text-zinc-200"
+
+                  {/* Category Filter Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[
+                      { id: "all", label: `All Avatars (${(PRESET_AVATARS || []).length})` },
+                      { id: "Cyber & Heroes", label: `Cyber & Heroes (${(PRESET_AVATARS || []).filter(p => p.category === "Cyber & Heroes").length})` },
+                      { id: "Icons & Mythos", label: `Icons & Mythos (${(PRESET_AVATARS || []).filter(p => p.category === "Icons & Mythos").length})` },
+                      { id: "Gear & Tech", label: `Gear & Tech (${(PRESET_AVATARS || []).filter(p => p.category === "Gear & Tech").length})` },
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setAvatarCategory(cat.id)}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          avatarCategory === cat.id
+                            ? "bg-blue-600/30 text-blue-300 border-blue-400/50 shadow-sm"
+                            : "bg-[#0c101d] text-zinc-400 border-white/10 hover:border-white/20 hover:text-zinc-200"
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Avatars Grid */}
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[260px] overflow-y-auto pr-1 p-2 rounded-xl bg-black/40 border border-white/5 custom-synopsis-scrollbar">
+                    {(PRESET_AVATARS || [])
+                      .filter((p) => avatarCategory === "all" || p.category === avatarCategory)
+                      .map((preset) => {
+                        const isSelected = avatarUrl === preset.url;
+                        return (
+                          <button
+                            key={preset.id || preset.name}
+                            type="button"
+                            onClick={() => handleSelectPresetAvatar(preset.url)}
+                            className={`group p-1 rounded-xl border flex flex-col items-center gap-1 transition-all text-center cursor-pointer ${
+                              isSelected
+                                ? "border-blue-400 ring-2 ring-blue-500/50 bg-blue-500/25 shadow-md shadow-blue-500/20"
+                                : "border-white/10 hover:border-white/30 bg-[#0a0f1d]/60 hover:bg-[#0f172a]"
                             }`}
+                            title={`${preset.name} • ${preset.role || "Avatar"}`}
                           >
-                            {preset.name}
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform bg-black/50">
+                              <img
+                                src={preset.url}
+                                alt={preset.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to public route if needed
+                                  (e.target as HTMLImageElement).src = `/${preset.id}.png`;
+                                }}
+                              />
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-blue-500/40 flex items-center justify-center">
+                                  <Check className="w-4 h-4 text-white drop-shadow-md stroke-[3]" />
+                                </div>
+                              )}
+                            </div>
+                            <span
+                              className={`text-[9px] font-bold truncate max-w-full leading-tight ${
+                                isSelected ? "text-blue-300" : "text-zinc-400 group-hover:text-zinc-200"
+                              }`}
+                            >
+                              {preset.name}
+                            </span>
+                          </button>
+                        );
+                      })}
                   </div>
                 </div>
               </div>

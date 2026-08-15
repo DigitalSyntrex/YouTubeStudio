@@ -354,8 +354,8 @@ export const Header: React.FC<HeaderProps> = ({
   ).toFixed(1);
 
   return (
-    <header className="bg-[#121212] border-b border-white/10 text-zinc-100 py-2.5 px-3 sm:px-5 lg:px-6">
-      <div className="max-w-7xl mx-auto space-y-3">
+    <header className="bg-[#121212] border-b border-white/10 text-zinc-100 py-2 sm:py-2.5 px-3 sm:px-5 lg:px-6">
+      <div className="max-w-7xl mx-auto space-y-2.5">
         {/* View Mode & Hub Navigation Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-white/10 pb-2.5">
           {/* Left: Studio Navigation Buttons */}
@@ -410,33 +410,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>YouTube Studio Engine Online</span>
             </div>
-          </div>
-        </div>
-
-        {/* Global Production Metrics Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 py-0.5">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#080c18]/90 border border-white/10 rounded-lg shadow-sm backdrop-blur-md">
-            <FolderKanban className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span className="text-xs font-black text-white">{totalSeriesCount}</span>
-            <span className="text-[10px] font-bold text-zinc-400 uppercase">Series</span>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#080c18]/90 border border-white/10 rounded-lg shadow-sm backdrop-blur-md">
-            <Film className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span className="text-xs font-black text-white">{totalEpisodesCount}</span>
-            <span className="text-[10px] font-bold text-zinc-400 uppercase">Episodes</span>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#080c18]/90 border border-white/10 rounded-lg shadow-sm backdrop-blur-md">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-xs font-black text-white">{totalCompletedEpisodes}</span>
-            <span className="text-[10px] font-bold text-zinc-400 uppercase">Published</span>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#080c18]/90 border border-white/10 rounded-lg shadow-sm backdrop-blur-md">
-            <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="text-xs font-black text-white">{totalPlannedHours}h</span>
-            <span className="text-[10px] font-bold text-zinc-400 uppercase">Planned</span>
           </div>
         </div>
 

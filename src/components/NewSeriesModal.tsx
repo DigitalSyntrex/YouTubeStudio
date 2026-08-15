@@ -62,23 +62,6 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
     ? parseInt(overrideEpisodeCount, 10)
     : calculatedCount;
 
-  const quickGamePresets = [
-    { title: "Silent Hill 2 Remake", genre: "Survival Horror", color: "#a855f7" },
-    { title: "Elden Ring: Shadow of Erdtree", genre: "Soulsborne", color: "#f59e0b" },
-    { title: "Black Myth: Wukong", genre: "Action RPG", color: "#ef4444" },
-    { title: "Final Fantasy VII Rebirth", genre: "JRPG", color: "#10b981" },
-    { title: "Metroid Prime 4: Beyond", genre: "Action FPS", color: "#38bdf8" },
-    { title: "Dragon's Dogma 2", genre: "Open World RPG", color: "#ec4899" },
-  ];
-
-  const handleSelectPreset = (preset: { title: string; genre: string; color: string }) => {
-    setGameTitle(preset.title);
-    setBadgeText(preset.title.toUpperCase());
-    setGenre(preset.genre);
-    setIsCustomGenre(false);
-    setAccentColor(preset.color);
-  };
-
   const getEffectivePlaythroughType = (): string => {
     if (playthroughType === "Other") {
       return customType.trim() || "Custom Playthrough";
@@ -171,16 +154,16 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-[#121212] border border-white/10 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden animate-in fade-in duration-200">
+      <div className="bg-[#121212] border border-blue-500/30 w-full max-w-2xl rounded-2xl shadow-2xl shadow-blue-950/80 max-h-[92vh] flex flex-col relative overflow-hidden">
         {/* Modal Header */}
-        <div className="p-5 bg-[#09090b] border-b border-white/10 flex items-center justify-between">
+        <div className="p-4 sm:p-5 bg-[#09090b] border-b border-white/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
                 <span>Playthrough Series Generator</span>
                 <span className="text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20 px-2 py-0.5 rounded uppercase">
                   90-120 Min Format
@@ -191,18 +174,18 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white bg-[#18181b] hover:bg-[#27272a] rounded-lg transition-colors border border-white/10"
+            className="p-1.5 text-zinc-400 hover:text-white bg-[#18181b] hover:bg-[#27272a] rounded-lg transition-colors border border-white/10 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="p-3 bg-[#0a0a0a] border-b border-white/10 flex items-center gap-2">
+        <div className="p-3 bg-[#0a0a0a] border-b border-white/10 flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setMode("auto_90_120")}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer ${
               mode === "auto_90_120"
                 ? "bg-blue-500/10 text-blue-300 border-blue-500/40 shadow-sm"
                 : "bg-[#121212] text-zinc-400 border-white/5 hover:text-zinc-200"
@@ -214,7 +197,7 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
           <button
             type="button"
             onClick={() => setMode("quick_single")}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
+            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 border cursor-pointer ${
               mode === "quick_single"
                 ? "bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-sm"
                 : "bg-[#121212] text-zinc-400 border-white/5 hover:text-zinc-200"
@@ -225,28 +208,7 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Quick Presets */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-2">Quick Game Title Presets:</label>
-            <div className="flex flex-wrap gap-1.5">
-              {quickGamePresets.map((preset) => (
-                <button
-                  type="button"
-                  key={preset.title}
-                  onClick={() => handleSelectPreset(preset)}
-                  className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${
-                    gameTitle === preset.title
-                      ? "bg-blue-500/20 text-blue-200 border-blue-400/50 font-semibold"
-                      : "bg-[#18181b] text-zinc-400 border-white/10 hover:border-white/20 hover:text-zinc-200"
-                  }`}
-                >
-                  {preset.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
           {/* Game Title & Genre Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
