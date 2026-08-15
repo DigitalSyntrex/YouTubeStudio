@@ -5,7 +5,7 @@ import { PlaythroughSeries } from "../types";
 interface KeyItemsTrackerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  series: PlaythroughSeries;
+  series?: PlaythroughSeries;
 }
 
 interface ItemEntry {
@@ -26,9 +26,23 @@ export const KeyItemsTrackerModal: React.FC<KeyItemsTrackerModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const isFF16 = series.id === "final-fantasy-xvi";
+  const isBloodborne = series?.id === "bloodborne" || (series?.gameTitle || "").toLowerCase().includes("bloodborne");
+  const isFF16 = series?.id === "final-fantasy-xvi";
 
-  const defaultItems: ItemEntry[] = isFF16
+  const defaultItems: ItemEntry[] = isBloodborne
+    ? [
+        { id: "bb_item_1", name: "Holy Moonlight Sword (DLC)", category: "Weapon", location: "Defeating Ludwig the Accursed / Holy Blade", episodePart: 16, obtained: true, isMissable: false, notes: "Legendary arcane trick greatsword firing moonlight beams." },
+        { id: "bb_item_2", name: "Rakuyo (Lady Maria's Twin Blades)", category: "Weapon", location: "Fishing Hamlet Shark Giant Well", episodePart: 18, obtained: true, isMissable: true, notes: "Top-tier Skill weapon dropped by twin shark giants." },
+        { id: "bb_item_3", name: "Whirligig Saw (Pizza Cutter)", category: "Weapon", location: "Hunter's Nightmare Church Cellar", episodePart: 16, obtained: true, isMissable: false, notes: "Holding L2 continuously shreds beast bosses with serration." },
+        { id: "bb_item_4", name: "Chikage (Vileblood Katana)", category: "Weapon", location: "Castle Cainhurst Vileblood Registry", episodePart: 10, obtained: true, isMissable: true, notes: "Transformed state inflicts massive Bloodtinge damage." },
+        { id: "bb_item_5", name: "Blade of Mercy (Dual Daggers)", category: "Weapon", location: "Eileen the Crow Questline Reward", episodePart: 11, obtained: true, isMissable: true, notes: "Ultra-fast S-scaling Skill twin daggers." },
+        { id: "bb_item_6", name: "One Third of Umbilical Cord (Clinic)", category: "Key Item", location: "Impostor Iosefka's Clinic (Post-Rom)", episodePart: 9, obtained: true, isMissable: true, notes: "Harvested from Iosefka during the Blood Moon." },
+        { id: "bb_item_7", name: "One Third of Umbilical Cord (Workshop)", category: "Key Item", location: "Abandoned Old Workshop Altar", episodePart: 6, obtained: true, isMissable: true, notes: "Found in the waking world source of the Dream." },
+        { id: "bb_item_8", name: "One Third of Umbilical Cord (Wet Nurse)", category: "Key Item", location: "Lunarium Apex (Mensis)", episodePart: 19, obtained: true, isMissable: false, notes: "Dropped by Mergo's Wet Nurse for the True Ending." },
+        { id: "bb_item_9", name: "A Call Beyond", category: "Key Item", location: "Upper Cathedral Ward Rafters", episodePart: 14, obtained: true, isMissable: true, notes: "Channels Great Ones to rain homing star lasers." },
+        { id: "bb_item_10", name: "Blood Rock (+10 Slab)", category: "Key Item", location: "Mensis Loft Bottomless Pit", episodePart: 19, obtained: true, isMissable: true, notes: "Required to reinforce primary weapon to max +10." },
+      ]
+    : isFF16
     ? [
         { id: "1", name: "Gotterdammerung (Blade of Ruin)", category: "Weapon", location: "Blacksmith's Blues IV Quest Reward", episodePart: 8, obtained: true, isMissable: false, notes: "375 Atk / 375 Stagger. Requires Orichalcum & Darksteel." },
         { id: "2", name: "Ragnarok Sword", category: "Weapon", location: "Blacksmith's Blues IV Completion", episodePart: 7, obtained: true, isMissable: false, notes: "Ingredient for Gotterdammerung." },

@@ -82,7 +82,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     localStorage.setItem("yt_playlists_minimized", isPlaylistsMinimized.toString());
   }, [isPlaylistsMinimized]);
 
-  const activeSeries = seriesList.find((s) => s.id === activeSeriesId) || seriesList[0];
+  const activeSeries = (seriesList || []).find((s) => s?.id === activeSeriesId) || seriesList?.[0];
 
   // Helper calculation for series completion
   const getSeriesProgress = (episodes: Episode[]) => {
@@ -101,36 +101,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   };
 
   // Stats across all series
-  const totalSeriesCount = seriesList.length;
-  const totalEpisodesCount = seriesList.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-  const totalCompletedEpisodes = seriesList.reduce(
+  const totalSeriesCount = (seriesList || []).length;
+  const totalEpisodesCount = (seriesList || []).reduce((acc, s) => acc + (s?.episodes?.length || 0), 0);
+  const totalCompletedEpisodes = (seriesList || []).reduce(
     (acc, s) =>
       acc +
-      (s.episodes?.filter((e) => e.status === "published" || e.status === "edited" || e.status === "uploaded")
+      (s?.episodes?.filter((e) => e && (e.status === "published" || e.status === "edited" || e.status === "uploaded"))
         .length || 0),
     0
   );
   const totalPlannedHours = (
-    seriesList.reduce(
-      (acc, s) => acc + (s.episodes?.reduce((epAcc, ep) => epAcc + (ep.estDurationMinutes || 90), 0) || 0),
+    (seriesList || []).reduce(
+      (acc, s) => acc + (s?.episodes?.reduce((epAcc, ep) => epAcc + (ep?.estDurationMinutes || 90), 0) || 0),
       0
     ) / 60
   ).toFixed(0);
 
-  const completedSeriesList = seriesList.filter((s) => {
+  const completedSeriesList = (seriesList || []).filter((s) => {
+    if (!s) return false;
     const { percent } = getSeriesProgress(s.episodes);
     return percent >= 90;
   });
 
-  const activePlaythroughsList = seriesList.filter((s) => {
+  const activePlaythroughsList = (seriesList || []).filter((s) => {
+    if (!s) return false;
     const { percent } = getSeriesProgress(s.episodes);
     return percent < 90;
   });
 
-  const filteredSeriesList = seriesList.filter((s) => {
+  const filteredSeriesList = (seriesList || []).filter((s) => {
+    if (!s) return false;
+    const searchLower = (searchTerm || "").toLowerCase();
     const matchesSearch =
-      s.gameTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.playthroughType && s.playthroughType.toLowerCase().includes(searchTerm.toLowerCase()));
+      !searchLower ||
+      (s.gameTitle && s.gameTitle.toLowerCase().includes(searchLower)) ||
+      (s.playthroughType && s.playthroughType.toLowerCase().includes(searchLower));
     if (!matchesSearch) return false;
 
     const { percent } = getSeriesProgress(s.episodes);

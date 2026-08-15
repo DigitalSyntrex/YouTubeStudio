@@ -45,12 +45,8 @@ import {
 import { Episode, EpisodeStatus, PlaythroughSeries, QuestEntry, BossEntry, LootEntry } from "../types";
 import { getBossAndLootForSeries } from "../data/bossLootData";
 import { safeFetchJson } from "../utils/apiUtils";
-
-export interface CustomSynopsisEntry {
-  gameTitle: string;
-  synopsis: string;
-  sourceFile: string;
-}
+import { useAuth } from "../context/AuthContext";
+import { findSynopsisInDb, CustomSynopsisEntry } from "../utils/gameSynopsisDb";
 
 interface SeriesDashboardProps {
   seriesList: PlaythroughSeries[];
@@ -120,6 +116,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
   onOpenGameLogoModal,
   onUpdateSeriesSynopsis,
 }) => {
+  const { userProfile } = useAuth();
   const episodes = activeSeries.episodes || [];
   const quests = activeSeries.quests || [];
   const seriesId = activeSeries.id;
@@ -195,13 +192,15 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
       });
 
       const activeMatch =
-        parsed.find(
-          (p) => p.gameTitle.toLowerCase().trim() === activeSeries.gameTitle.toLowerCase().trim()
+        (parsed || []).find(
+          (p) => p?.gameTitle && activeSeries?.gameTitle && p.gameTitle.toLowerCase().trim() === activeSeries.gameTitle.toLowerCase().trim()
         ) ||
-        parsed.find(
+        (parsed || []).find(
           (p) =>
-            activeSeries.gameTitle.toLowerCase().includes(p.gameTitle.toLowerCase().trim()) ||
-            p.gameTitle.toLowerCase().trim().includes(activeSeries.gameTitle.toLowerCase().trim())
+            p?.gameTitle && activeSeries?.gameTitle && (
+              activeSeries.gameTitle.toLowerCase().includes(p.gameTitle.toLowerCase().trim()) ||
+              p.gameTitle.toLowerCase().trim().includes(activeSeries.gameTitle.toLowerCase().trim())
+            )
         );
 
       if (activeMatch && onUpdateSeriesSynopsis) {
@@ -231,12 +230,14 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
     });
   };
 
-  const activeDbMatch = customDb.find(
-    (entry) => entry.gameTitle.toLowerCase().trim() === activeSeries.gameTitle.toLowerCase().trim()
-  ) || customDb.find(
+  const activeDbMatch = (customDb || []).find(
+    (entry) => entry?.gameTitle && activeSeries?.gameTitle && entry.gameTitle.toLowerCase().trim() === activeSeries.gameTitle.toLowerCase().trim()
+  ) || (customDb || []).find(
     (entry) =>
-      activeSeries.gameTitle.toLowerCase().includes(entry.gameTitle.toLowerCase().trim()) ||
-      entry.gameTitle.toLowerCase().trim().includes(activeSeries.gameTitle.toLowerCase().trim())
+      entry?.gameTitle && activeSeries?.gameTitle && (
+        activeSeries.gameTitle.toLowerCase().includes(entry.gameTitle.toLowerCase().trim()) ||
+        entry.gameTitle.toLowerCase().trim().includes(activeSeries.gameTitle.toLowerCase().trim())
+      )
   );
 
   const handleScrapeSynopsis = async () => {
@@ -263,28 +264,19 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
     }
   };
 
-  // Auto-apply game synopsis from custom DB library if matched by title, before defaulting to web scrape
+  // Auto-apply game synopsis from DB library (custom or built-in) if matched by title, before defaulting to live web scrape
   useEffect(() => {
     if (!activeSeries.gameTitle) return;
 
-    // Search custom DB library for a matching game title
-    const dbMatch = customDb.find(
-      (entry) => entry.gameTitle.toLowerCase().trim() === activeSeries.gameTitle.toLowerCase().trim()
-    ) || customDb.find(
-      (entry) =>
-        activeSeries.gameTitle.toLowerCase().includes(entry.gameTitle.toLowerCase().trim()) ||
-        entry.gameTitle.toLowerCase().trim().includes(activeSeries.gameTitle.toLowerCase().trim())
-    );
+    const dbMatch = findSynopsisInDb(activeSeries.gameTitle, customDb);
 
     if (dbMatch) {
-      const isCustomDbSource = activeSeries.gameSynopsisSource?.includes("Custom DB");
-      // Auto-apply DB synopsis if missing or if currently showing a web-scraped default
-      if (!activeSeries.gameSynopsis || (!isCustomDbSource && activeSeries.gameSynopsis !== dbMatch.synopsis)) {
+      if (!activeSeries.gameSynopsis || activeSeries.gameSynopsis !== dbMatch.synopsis) {
         if (onUpdateSeriesSynopsis) {
           onUpdateSeriesSynopsis(
             activeSeries.id,
             dbMatch.synopsis,
-            `Custom DB (${dbMatch.sourceFile || "Library"})`
+            dbMatch.sourceFile ? `DB Library (${dbMatch.sourceFile})` : "Official DB Library"
           );
         }
       }
@@ -449,7 +441,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
           </div>
 
           <span className="text-xs font-extrabold text-white truncate">
-            • {activeSeries.gameTitle}
+            • {activeSeries?.gameTitle || "Gaming Series"}
           </span>
 
           {isDashboardMinimized && (
@@ -490,12 +482,12 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
               <span
                 className="text-xs font-bold px-2 py-0.5 rounded-full border uppercase shadow-sm"
                 style={{
-                  backgroundColor: `${activeSeries.accentColor || "#38bdf8"}15`,
-                  borderColor: `${activeSeries.accentColor || "#38bdf8"}40`,
-                  color: activeSeries.accentColor || "#38bdf8",
+                  backgroundColor: `${activeSeries?.accentColor || "#38bdf8"}15`,
+                  borderColor: `${activeSeries?.accentColor || "#38bdf8"}40`,
+                  color: activeSeries?.accentColor || "#38bdf8",
                 }}
               >
-                {activeSeries.playthroughType || "100% Walkthrough"}
+                {activeSeries?.playthroughType || "100% Walkthrough"}
               </span>
               {completionPercent >= 100 ? (
                 <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
@@ -509,7 +501,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                 </span>
               )}
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-sm ml-1">
-                <span>{activeSeries.gameTitle}</span>
+                <span>{activeSeries?.gameTitle || "Gaming Series"}</span>
               </h2>
             </div>
 
@@ -520,15 +512,15 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                   Series:
                 </span>
                 <select
-                  value={activeSeries.id}
+                  value={activeSeries?.id}
                   onChange={(e) => onSelectSeries(e.target.value)}
                   className="bg-[#121622] border border-blue-500/40 hover:border-blue-400 focus:border-blue-300 rounded-lg px-2.5 py-1.5 text-xs font-extrabold text-white focus:outline-none transition-all cursor-pointer shadow-md"
                 >
                   {[...seriesList]
-                    .sort((a, b) => a.gameTitle.localeCompare(b.gameTitle))
+                    .sort((a, b) => (a?.gameTitle || "").localeCompare(b?.gameTitle || ""))
                     .map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.gameTitle} ({s.episodes?.length || 0} Ep)
+                        {s?.gameTitle || "Untitled"} ({s?.episodes?.length || 0} Ep)
                       </option>
                     ))}
                 </select>

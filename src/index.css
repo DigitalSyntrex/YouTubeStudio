@@ -71,6 +71,26 @@ html, body {
   background: rgba(148, 163, 184, 0.4);
 }
 
+/* Custom slim scrollbar for synopsis and compact panels */
+.custom-synopsis-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-synopsis-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+}
+.custom-synopsis-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.45);
+  border-radius: 4px;
+}
+.custom-synopsis-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.8);
+}
+.custom-synopsis-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.45) rgba(0, 0, 0, 0.25);
+}
+
 
 
 

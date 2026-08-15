@@ -53,33 +53,10 @@ export const StudioTitleBanner: React.FC<StudioTitleBannerProps> = ({
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none opacity-40" />
 
       <div className="relative z-10 max-w-2xl mx-auto space-y-1.5 sm:space-y-2">
-        {/* PLAYTHROUGH STUDIO LOGO WITH ARCED TEXT ABOVE */}
+        {/* PLAYTHROUGH STUDIO LOGO */}
         <div className="flex justify-center pt-0.5 pb-0.5">
           <div className="relative group/logo w-full flex justify-center">
             <div className="pt-1 pb-1.5 px-3 sm:px-5 bg-[#080d1a]/60 rounded-xl border-0 shadow-lg shadow-cyan-950/40 flex flex-col items-center justify-center backdrop-blur-md transition-all duration-300 w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl">
-              {/* ARCED TITLE TEXT ABOVE SHIELD */}
-              <div className="w-full flex justify-center -mb-2 sm:-mb-3.5 md:-mb-5 z-20 pointer-events-none overflow-visible">
-                <svg viewBox="0 0 1200 110" className="w-full max-w-[320px] min-[400px]:max-w-[400px] sm:max-w-[540px] md:max-w-[680px] lg:max-w-[820px] h-auto overflow-visible transition-all duration-300">
-                  <defs>
-                    <linearGradient id="headerArcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#ffffff" />
-                      <stop offset="45%" stopColor="#f1f5f9" />
-                      <stop offset="100%" stopColor="#94a3b8" />
-                    </linearGradient>
-                    <filter id="headerTextGlow" x="-30%" y="-30%" width="160%" height="160%">
-                      <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000000" floodOpacity="0.95" />
-                      <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#38bdf8" floodOpacity="0.75" />
-                    </filter>
-                    <path id="bannerArcPath" d="M 40 68 Q 600 12 1160 68" fill="none" />
-                  </defs>
-                  <text fontSize="64" fontWeight="900" letterSpacing="8" fill="url(#headerArcGrad)" stroke="#020617" strokeWidth="3" filter="url(#headerTextGlow)">
-                    <textPath href="#bannerArcPath" startOffset="50%" textAnchor="middle">
-                      {config.studioName || "PLAYTHROUGH STUDIO PRO"}
-                    </textPath>
-                  </text>
-                </svg>
-              </div>
-
               <img
                 src={logoSrc}
                 alt={config.studioName || "Playthrough Studio"}

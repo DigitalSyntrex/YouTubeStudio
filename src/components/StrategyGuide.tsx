@@ -70,7 +70,7 @@ export const StrategyGuide: React.FC<StrategyGuideProps> = ({
 
   // Selected episode IDs to auto-fill (defaults to all)
   const [selectedEpIds, setSelectedEpIds] = useState<number[]>(() =>
-    episodes.map((ep) => ep.id)
+    (episodes || []).map((ep) => ep.id)
   );
 
   // Selected title index per episode ID (allows switching between alternate hook titles)
@@ -80,7 +80,7 @@ export const StrategyGuide: React.FC<StrategyGuideProps> = ({
 
   // Expanded card state
   const [expandedEpId, setExpandedEpId] = useState<number | null>(
-    episodes.length > 0 ? episodes[0].id : null
+    (episodes || []).length > 0 ? episodes[0].id : null
   );
 
   // Feedback notifications
@@ -166,10 +166,10 @@ export const StrategyGuide: React.FC<StrategyGuideProps> = ({
 
   // Toggle select all
   const toggleSelectAll = () => {
-    if (selectedEpIds.length === episodes.length) {
+    if (selectedEpIds.length === (episodes || []).length) {
       setSelectedEpIds([]);
     } else {
-      setSelectedEpIds(episodes.map((ep) => ep.id));
+      setSelectedEpIds((episodes || []).map((ep) => ep.id));
     }
   };
 
@@ -177,7 +177,7 @@ export const StrategyGuide: React.FC<StrategyGuideProps> = ({
   const handleApplyAutoFill = () => {
     if (!onBatchUpdateEpisodes || selectedEpIds.length === 0) return;
 
-    const updatedEpisodes = episodes.map((ep) => {
+    const updatedEpisodes = (episodes || []).map((ep) => {
       if (!selectedEpIds.includes(ep.id)) return ep;
 
       const pkg = generatedPackages[ep.id];

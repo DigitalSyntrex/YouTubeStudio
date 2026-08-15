@@ -33,6 +33,7 @@ import {
   TrendingUp,
   Sparkle,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 interface YouTubeStudioUploadModalProps {
   isOpen: boolean;
@@ -73,9 +74,10 @@ export const YouTubeStudioUploadModal: React.FC<YouTubeStudioUploadModalProps> =
   onBatchUpdateEpisodes,
   onOpenThumbnailStudio,
 }) => {
+  const { userProfile } = useAuth();
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<number>(() => {
-    const readyEp = episodes.find((e) => e.status === "edited" || e.status === "recorded" || e.status === "published");
-    return readyEp ? readyEp.id : episodes[0]?.id || 1;
+    const readyEp = (episodes || []).find((e) => e?.status === "edited" || e?.status === "recorded" || e?.status === "published");
+    return readyEp ? readyEp.id : episodes?.[0]?.id || 1;
   });
 
   const [activeTab, setActiveTab] = useState<"quick_publish" | "video_stats" | "api_setup">("quick_publish");
@@ -89,7 +91,7 @@ export const YouTubeStudioUploadModal: React.FC<YouTubeStudioUploadModalProps> =
     return localStorage.getItem("youtube_api_key") || "";
   });
 
-  const currentEpisode = episodes.find((e) => e.id === selectedEpisodeId) || episodes[0];
+  const currentEpisode = (episodes || []).find((e) => e?.id === selectedEpisodeId) || episodes?.[0];
 
   const [videoIdInput, setVideoIdInput] = useState<string>(() => currentEpisode?.youtubeVideoId || "");
   const [manualViews, setManualViews] = useState<string>(() => currentEpisode?.videoStats?.views?.toString() || "");
@@ -359,7 +361,27 @@ export const YouTubeStudioUploadModal: React.FC<YouTubeStudioUploadModalProps> =
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 ml-2">
+          <div className="flex items-center gap-2.5 shrink-0 ml-2">
+            {/* Creator Avatar Badge */}
+            <div className="flex items-center gap-2 bg-zinc-950/80 px-2.5 py-1.5 rounded-xl border border-blue-500/30 shadow-inner">
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/50 flex items-center justify-center text-white text-[10px] font-black shrink-0">
+                {userProfile?.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
+              </div>
+              <div className="min-w-0 hidden sm:block text-left">
+                <div className="text-[8px] font-black uppercase tracking-widest text-cyan-400">
+                  Creator Tag
+                </div>
+                <div className="text-[11px] font-bold text-white truncate max-w-[110px]">
+                  {userProfile?.displayName || userProfile?.username || "Creator"}
+                </div>
+              </div>
+            </div>
+
             {/* Game Title Logo Badge */}
             <div className="flex items-center gap-2.5 bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-white/10 shadow-inner">
               {series?.coverImage ? (

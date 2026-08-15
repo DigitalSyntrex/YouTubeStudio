@@ -22,7 +22,7 @@ import { PlaythroughSeries, Episode } from "../types";
 interface MirillisActionIntegrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activeSeries: PlaythroughSeries;
+  activeSeries?: PlaythroughSeries;
   episodes: Episode[];
   activeEpisode?: Episode;
 }
@@ -35,11 +35,13 @@ export const MirillisActionIntegrationModal: React.FC<
   >("overlay");
   const [copied, setCopied] = useState<string | null>(null);
 
+  const seriesTitle = activeSeries?.gameTitle || "Gaming Series";
+
   // Default target episode
   const currentEp =
     activeEpisode ||
-    episodes.find((e) => e.status === "not_started") ||
-    episodes[0];
+    (episodes || []).find((e) => e?.status === "not_started") ||
+    episodes?.[0];
 
   if (!isOpen) return null;
 
@@ -51,10 +53,10 @@ export const MirillisActionIntegrationModal: React.FC<
 
   const currentUrl = window.location.href.split("#")[0];
   const overlayUrl = `${currentUrl}?hud=true&series=${encodeURIComponent(
-    activeSeries.gameTitle
+    seriesTitle
   )}&part=${currentEp?.partNumber || 1}`;
 
-  const recommendedFileName = `${activeSeries.gameTitle.replace(
+  const recommendedFileName = `${seriesTitle.replace(
     /[^a-zA-Z0-0]/g,
     ""
   )}_Part${String(currentEp?.partNumber || 1).padStart(2, "0")}_${(
@@ -191,7 +193,7 @@ export const MirillisActionIntegrationModal: React.FC<
                         </h5>
                       </div>
                       <p className="text-[10px] text-zinc-400 truncate mt-0.5">
-                        🎮 {activeSeries.gameTitle} • Objective: {currentEp?.endPoint || "Main Quest Goal"}
+                        🎮 {seriesTitle} • Objective: {currentEp?.endPoint || "Main Quest Goal"}
                       </p>
                     </div>
 
@@ -439,7 +441,7 @@ export const MirillisActionIntegrationModal: React.FC<
                     Recommended Output Folder Structure:
                   </span>
                   <div className="font-mono text-zinc-300 text-[11px] leading-relaxed">
-                    📁 C:\Videos\Action!\{activeSeries.gameTitle.replace(/\s+/g, "_")}\RawRecordings\
+                    📁 C:\Videos\Action!\{seriesTitle.replace(/\s+/g, "_")}\RawRecordings\
                     <br />
                     ├── 🎥 {recommendedFileName}.mp4
                     <br />
@@ -496,7 +498,7 @@ export const MirillisActionIntegrationModal: React.FC<
         <div className="p-4 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-zinc-400">
             <Radio className="w-4 h-4 text-red-400 animate-pulse" />
-            <span>Mirillis Action! Studio Companion • Active Game: <strong className="text-white">{activeSeries.gameTitle}</strong></span>
+            <span>Mirillis Action! Studio Companion • Active Game: <strong className="text-white">{seriesTitle}</strong></span>
           </div>
 
           <button

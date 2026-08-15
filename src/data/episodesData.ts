@@ -2,6 +2,7 @@ import { Episode, PlaythroughSeries } from "../types";
 import { defaultFF16Quests } from "./questsData";
 import { ff16PlaythroughSeries, ff16Episodes } from "./ff16Data";
 import { mafiaPlaythroughSeries, mafiaEpisodes, mafiaQuests } from "./mafiaData";
+import { bloodbornePlaythroughSeries, bloodborneEpisodes, bloodborneQuests } from "./bloodborneData";
 
 export const initialEpisodes: Episode[] = [
   {
@@ -1410,9 +1411,10 @@ THANK YOU for watching our complete 100% FF VI Pixel Remaster Series!
   }
 ];
 
-export { ff16Episodes, mafiaPlaythroughSeries, mafiaEpisodes, mafiaQuests };
+export { ff16Episodes, mafiaPlaythroughSeries, mafiaEpisodes, mafiaQuests, bloodbornePlaythroughSeries, bloodborneEpisodes, bloodborneQuests };
 
 export const defaultPlaythroughSeries: PlaythroughSeries[] = [
+  bloodbornePlaythroughSeries,
   mafiaPlaythroughSeries,
   ff16PlaythroughSeries,
   {
@@ -1424,6 +1426,8 @@ export const defaultPlaythroughSeries: PlaythroughSeries[] = [
     badgeText: "FF6 PIXEL REMASTER",
     accentColor: "#38bdf8",
     genre: "JRPG / Retro",
+    gameSynopsis: "A thousand years after the apocalyptic War of the Magi stripped magic from humanity, the ruthless Gestahlian Empire aims to conquer the world through Magitek machinery powered by captive Espers. Young magic-wielder Terra Branford, freed from imperial mind control, joins the Returners resistance to defy Emperor Gestahl and his psychotic general Kefka Palazzo before the balance of the cosmos is destroyed.",
+    gameSynopsisSource: "AI Web Scraped via Google Search Grounding",
     playthroughType: "100% Walkthrough",
     createdAt: "2026-08-01",
     episodes: initialEpisodes,
@@ -1437,6 +1441,8 @@ export const defaultPlaythroughSeries: PlaythroughSeries[] = [
     badgeText: "CHRONO TRIGGER",
     accentColor: "#f59e0b",
     genre: "JRPG / Time Travel",
+    gameSynopsis: "When a teleportation machine malfunction sends Princess Marle spiraling into the past at the Millennial Fair, young swordsman Crono and inventor Lucca embark on a journey across prehistoric, medieval, modern, apocalyptic, and magical antique eras. Discovering that a planet-devouring extraterrestrial parasite named Lavos will destroy the earth in 1999 AD, heroes from across time unite to alter history and save humanity.",
+    gameSynopsisSource: "AI Web Scraped via Google Search Grounding",
     playthroughType: "100% Walkthrough",
     createdAt: "2026-08-05",
     episodes: [
@@ -1575,6 +1581,8 @@ export const defaultPlaythroughSeries: PlaythroughSeries[] = [
     badgeText: "TEARS OF THE KINGDOM",
     accentColor: "#10b981",
     genre: "Action Adventure / Open World",
+    gameSynopsis: "Following the resurrection of the ancient Demon King Ganondorf beneath Hyrule Castle and the sudden vanishing of Princess Zelda, Link awakens with a mystical Zonai right arm endowed with reality-bending abilities. Traversing sky islands, the expansive Hyrule surface, and the subterranean Depths, Link uncovers the origins of the Imprisoning War and restores the Master Sword to defeat Ganondorf.",
+    gameSynopsisSource: "AI Web Scraped via Google Search Grounding",
     playthroughType: "Blind Playthrough",
     episodes: [
       {
@@ -1627,6 +1635,8 @@ export const defaultPlaythroughSeries: PlaythroughSeries[] = [
     badgeText: "RESIDENT EVIL 4 REMAKE",
     accentColor: "#ef4444",
     genre: "Survival Horror / Action",
+    gameSynopsis: "Six years after the catastrophic biological disaster in Raccoon City, US government special agent Leon S. Kennedy is dispatched on a covert mission to a remote European village to rescue the President's abducted daughter, Ashley Graham. Leon discovers the hostile villagers are infected by a mind-controlling parasite known as Las Plagas, controlled by the sinister religious cult Los Iluminados led by Osmund Saddler.",
+    gameSynopsisSource: "AI Web Scraped via Google Search Grounding",
     playthroughType: "100% Walkthrough",
     episodes: [
       {

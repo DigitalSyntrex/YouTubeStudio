@@ -175,8 +175,8 @@ export const StudioBannerModal: React.FC<StudioBannerModalProps> = ({
     onClose();
   };
 
-  const selectedPreset = PRESET_STUDIO_EMBLEMS.find((p) => p.id === presetLogoId) || PRESET_STUDIO_EMBLEMS[0];
-  const PresetIcon = selectedPreset.icon;
+  const selectedPreset = (PRESET_STUDIO_EMBLEMS || []).find((p) => p.id === presetLogoId) || PRESET_STUDIO_EMBLEMS[0];
+  const PresetIcon = selectedPreset?.icon || Sparkles;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">

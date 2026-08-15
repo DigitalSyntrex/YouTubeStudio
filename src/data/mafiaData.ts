@@ -705,6 +705,8 @@ THANK YOU for watching the entire Mafia: Definitive Edition Playthrough!
 export const mafiaPlaythroughSeries: PlaythroughSeries = {
   id: "mafia-definitive-edition",
   gameTitle: "Mafia: Definitive Edition",
+  gameTitleLogo: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 75" fill="none"><text x="10" y="46" font-family="'Arial Black', sans-serif" font-size="38" font-weight="900" fill="%23dc2626" letter-spacing="3">MAFIA</text><text x="12" y="66" font-family="sans-serif" font-size="10" font-weight="800" fill="%23f8fafc" letter-spacing="5">DEFINITIVE EDITION</text></svg>`,
+  useTitleLogo: true,
   gameSynopsis: "Set in 1930s Prohibition-era Lost Heaven, taxi driver Tommy Angelo is inadvertently thrust into the Italian mob after helping two Salieri family enforcers escape an ambush. As Tommy rises through the ranks under Don Salieri, he navigates a deadly gang war against rival mob boss Don Morello while grappling with morality, loyalty, and betrayal.",
   gameSynopsisSource: "AI Web Scraped via Google Search Grounding",
   subtitle: "100% Walkthrough & Let's Play Series",

@@ -42,6 +42,7 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
   const [genre, setGenre] = useState("Action / RPG");
   const [isCustomGenre, setIsCustomGenre] = useState(false);
   const [accentColor, setAccentColor] = useState("#38bdf8");
+  const [gameTitleLogo, setGameTitleLogo] = useState<string>("");
 
   // Playthrough Type State
   const [playthroughType, setPlaythroughType] = useState<string>("100% Walkthrough");
@@ -105,6 +106,11 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
         playthroughStyle: playthroughStyle,
       });
 
+      if (gameTitleLogo.trim()) {
+        series.gameTitleLogo = gameTitleLogo.trim();
+        series.useTitleLogo = true;
+      }
+
       // Save generated bosses & loot directly to local storage for BossLootCatalogModal
       safeSetLocalStorage(`yt_bosses_${series.id}`, bosses);
       safeSetLocalStorage(`yt_loot_${series.id}`, loot);
@@ -115,6 +121,8 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
       const newSeries: PlaythroughSeries = {
         id: `series-${Date.now()}`,
         gameTitle: gameTitle.trim(),
+        gameTitleLogo: gameTitleLogo.trim() || undefined,
+        useTitleLogo: Boolean(gameTitleLogo.trim()),
         subtitle: subtitle.trim() || `${finalPlaythroughType} Series`,
         badgeText: badgeText.trim().toUpperCase() || gameTitle.trim().toUpperCase(),
         accentColor,
@@ -483,6 +491,59 @@ export const NewSeriesModal: React.FC<NewSeriesModalProps> = ({ onClose, onAddSe
                 className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-blue-400 uppercase font-mono"
               />
             </div>
+          </div>
+
+          {/* Optional Game Title Logo */}
+          <div className="bg-[#09090b] p-3 rounded-xl border border-white/10 space-y-2">
+            <label className="block text-xs font-bold text-zinc-200 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-cyan-400">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Optional Game Title Logo (Image / SVG / URL)</span>
+              </span>
+              <span className="text-[10px] text-zinc-400">Can also be added anytime later</span>
+            </label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="Paste image URL (e.g. https://... or /logo.png)"
+                value={gameTitleLogo}
+                onChange={(e) => setGameTitleLogo(e.target.value)}
+                className="flex-1 bg-[#18181b] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-400 font-mono"
+              />
+              <label className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0">
+                Upload File
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg, image/svg+xml, image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (evt) => {
+                        if (evt.target?.result) {
+                          setGameTitleLogo(evt.target.result as string);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            {gameTitleLogo && (
+              <div className="flex items-center gap-2 p-2 bg-[#12182c] border border-cyan-500/30 rounded-lg">
+                <img src={gameTitleLogo} alt="Logo preview" className="h-6 max-w-[120px] object-contain" />
+                <span className="text-[11px] text-cyan-300 font-bold truncate flex-1">Logo image attached</span>
+                <button
+                  type="button"
+                  onClick={() => setGameTitleLogo("")}
+                  className="text-xs text-red-400 hover:text-red-300 font-bold px-1.5 py-0.5 rounded cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Color Picker */}

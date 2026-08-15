@@ -57,7 +57,7 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
 }) => {
   // Find default episode to record (first not_started or first recorded)
   const defaultEpisode =
-    episodes.find((e) => e.status === "not_started") || episodes[0];
+    (episodes || []).find((e) => e?.status === "not_started") || episodes?.[0];
 
   const [selectedEpId, setSelectedEpId] = useState<number>(
     initialEpisodeId || defaultEpisode?.id || 0
@@ -87,7 +87,7 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
-  const activeEp = episodes.find((e) => e.id === selectedEpId) || defaultEpisode;
+  const activeEp = (episodes || []).find((e) => e?.id === selectedEpId) || defaultEpisode;
 
   // Sync target minutes when active episode changes
   useEffect(() => {

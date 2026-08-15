@@ -35,10 +35,10 @@ export const ThumbnailGeneratorModal: React.FC<ThumbnailGeneratorModalProps> = (
       : rawBadge || currentGameTitle.toUpperCase();
 
   const [selectedEpId, setSelectedEpId] = useState<number>(
-    defaultEpisodeId || episodes[0]?.id || 1
+    defaultEpisodeId || episodes?.[0]?.id || 1
   );
 
-  const selectedEpisode = episodes.find((e) => e.id === selectedEpId) || episodes[0];
+  const selectedEpisode = (episodes || []).find((e) => e?.id === selectedEpId) || episodes?.[0];
 
   // Thumbnail overlay state
   const [mainTitle, setMainTitle] = useState<string>("");

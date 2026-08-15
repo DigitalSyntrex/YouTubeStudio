@@ -1,4 +1,7 @@
 import { BossEntry, LootEntry, PlaythroughSeries } from "../types";
+import { bloodborneBosses, bloodborneLoot } from "./bloodborneData";
+
+export { bloodborneBosses, bloodborneLoot };
 
 // ==========================================
 // 1. FINAL FANTASY VI PIXEL REMASTER CATALOG
@@ -1279,6 +1282,9 @@ export function getBossAndLootForSeries(series?: PlaythroughSeries): {
   const gTitle = (series.gameTitle || "").toLowerCase();
 
   // Match curated game catalogs
+  if (sId.includes("bloodborne") || gTitle.includes("bloodborne") || gTitle.includes("old hunters")) {
+    return { bosses: bloodborneBosses, loot: bloodborneLoot };
+  }
   if (sId.includes("ff16") || sId.includes("final-fantasy-xvi") || gTitle.includes("final fantasy xvi") || gTitle.includes("ff16") || gTitle.includes("ffxvi")) {
     return { bosses: ff16Bosses, loot: ff16Loot };
   }

@@ -18,6 +18,7 @@ import {
   where
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { DEFAULT_CREATOR_AVATARS } from "../data/defaultAvatars";
 
 export interface UserProfile {
   uid: string;
@@ -300,7 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: cleanUser,
       displayName: finalDisplayName,
       email: emailToUse,
-      avatarUrl: "",
+      avatarUrl: DEFAULT_CREATOR_AVATARS[0]?.url || "",
       theme: "midnight",
       bio: "YouTube Gaming Creator & Walkthrough Strategist",
       channelName: `${finalDisplayName}'s Plays`,

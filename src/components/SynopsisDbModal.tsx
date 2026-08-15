@@ -1,12 +1,7 @@
 import React, { useState, useRef } from "react";
-import { Database, FolderUp, X, Search, Trash2, Check, FileCheck, Copy } from "lucide-react";
+import { Database, FolderUp, X, Search, Trash2, Check, FileCheck, Copy, Sparkles, BookOpen } from "lucide-react";
 import { PlaythroughSeries } from "../types";
-
-export interface CustomSynopsisEntry {
-  gameTitle: string;
-  synopsis: string;
-  sourceFile?: string;
-}
+import { BUILT_IN_GAME_SYNOPSES, CustomSynopsisEntry } from "../utils/gameSynopsisDb";
 
 interface SynopsisDbModalProps {
   activeSeries?: PlaythroughSeries;
@@ -21,17 +16,24 @@ export const SynopsisDbModal: React.FC<SynopsisDbModalProps> = ({
 }) => {
   const [customDb, setCustomDb] = useState<CustomSynopsisEntry[]>(() => {
     const saved = localStorage.getItem("yt_custom_synopsis_db");
+    const userEntries: CustomSynopsisEntry[] = [];
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) userEntries.push(...parsed);
       } catch (e) {
         console.error("Failed to parse custom synopsis DB:", e);
       }
     }
-    return [];
+    
+    // Combine built-in synopses and user-saved synopses without duplicate titles
+    const map = new Map<string, CustomSynopsisEntry>();
+    BUILT_IN_GAME_SYNOPSES.forEach((item) => map.set(item.gameTitle.toLowerCase().trim(), item));
+    userEntries.forEach((item) => map.set(item.gameTitle.toLowerCase().trim(), item));
+    return Array.from(map.values());
   });
 
+  const [activeTab, setActiveTab] = useState<"all" | "builtin" | "custom">("all");
   const [searchDbQuery, setSearchDbQuery] = useState("");
   const [templateCopied, setTemplateCopied] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
@@ -121,11 +123,20 @@ export const SynopsisDbModal: React.FC<SynopsisDbModalProps> = ({
     });
   };
 
-  const filteredDb = customDb.filter(
-    (item) =>
+  const filteredDb = customDb.filter((item) => {
+    const matchesSearch =
       item.gameTitle.toLowerCase().includes(searchDbQuery.toLowerCase()) ||
-      item.synopsis.toLowerCase().includes(searchDbQuery.toLowerCase())
-  );
+      item.synopsis.toLowerCase().includes(searchDbQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (activeTab === "builtin") {
+      return item.sourceFile === "Official DB Library";
+    }
+    if (activeTab === "custom") {
+      return item.sourceFile !== "Official DB Library";
+    }
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -216,17 +227,55 @@ export const SynopsisDbModal: React.FC<SynopsisDbModalProps> = ({
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchDbQuery}
-                onChange={(e) => setSearchDbQuery(e.target.value)}
-                placeholder="Search saved game titles or plot synopses..."
-                className="w-full bg-[#080d1a] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
-              />
+          {/* Category Filter & Search Bar */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "all"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>All Games ({customDb.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("builtin")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "builtin"
+                    ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Official Library ({customDb.filter((c) => c.sourceFile === "Official DB Library").length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("custom")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "custom"
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white"
+                }`}
+              >
+                <FolderUp className="w-3.5 h-3.5" />
+                <span>Custom Uploads ({customDb.filter((c) => c.sourceFile !== "Official DB Library").length})</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchDbQuery}
+                  onChange={(e) => setSearchDbQuery(e.target.value)}
+                  placeholder="Search saved game titles or plot synopses (e.g. Bloodborne, Resident Evil 4, Elden Ring)..."
+                  className="w-full bg-[#080d1a] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
+                />
+              </div>
             </div>
           </div>
 
@@ -301,9 +350,11 @@ export const SynopsisDbModal: React.FC<SynopsisDbModalProps> = ({
                       </div>
                     </div>
 
-                    <p className="text-xs text-zinc-300 leading-relaxed italic bg-black/30 p-2.5 rounded-xl border border-white/5">
-                      "{item.synopsis}"
-                    </p>
+                    <div className="max-h-28 overflow-y-auto custom-synopsis-scrollbar pr-1 bg-black/30 p-2.5 rounded-xl border border-white/5">
+                      <p className="text-xs text-zinc-300 leading-relaxed italic">
+                        "{item.synopsis}"
+                      </p>
+                    </div>
                   </div>
                 );
               })

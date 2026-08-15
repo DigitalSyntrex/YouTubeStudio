@@ -36,6 +36,7 @@ import {
 import { useAuth, UserProfile } from "../context/AuthContext";
 import { AppThemeId, THEME_CONFIGS } from "../utils/themeUtils";
 import { PlaythroughSeries, Episode, Achievement } from "../types";
+import { DEFAULT_CREATOR_AVATARS, CreatorAvatarPreset } from "../data/defaultAvatars";
 import {
   loadAchievements,
   calculateGamerscore,
@@ -57,14 +58,7 @@ interface AccountSettingsModalProps {
 
 type TabType = "overview" | "achievements" | "profile" | "preferences";
 
-const PRESET_AVATARS = [
-  { name: "Cyber Creator", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80" },
-  { name: "Retro Arcade", url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=150&auto=format&fit=crop&q=80" },
-  { name: "Pixel Hero", url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80" },
-  { name: "Mage Queen", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
-  { name: "Night Ninja", url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80" },
-  { name: "Sci-Fi Pilot", url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80" },
-];
+const PRESET_AVATARS = DEFAULT_CREATOR_AVATARS;
 
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   isOpen,
@@ -122,22 +116,22 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const recentUnlocked = [...unlockedAchievements].reverse().slice(0, 4);
 
   // Last worked on series & last episode
-  const activeSeries = seriesList.find((s) => s.id === activeSeriesId) || seriesList[0];
-  const lastEpisode = activeSeries?.episodes?.[activeSeries.episodes.length - 1] || activeSeries?.episodes?.[0];
+  const activeSeries = (seriesList || []).find((s) => s?.id === activeSeriesId) || seriesList?.[0];
+  const lastEpisode = activeSeries?.episodes?.[(activeSeries.episodes?.length || 1) - 1] || activeSeries?.episodes?.[0];
 
   // Series metrics calculation
-  const totalEpisodesInCatalog = seriesList.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-  const publishedEpisodesCount = seriesList.reduce(
-    (acc, s) => acc + (s.episodes?.filter((e) => e.status === "published").length || 0),
+  const totalEpisodesInCatalog = (seriesList || []).reduce((acc, s) => acc + (s?.episodes?.length || 0), 0);
+  const publishedEpisodesCount = (seriesList || []).reduce(
+    (acc, s) => acc + (s?.episodes?.filter((e) => e?.status === "published")?.length || 0),
     0
   );
-  const recordedEpisodesCount = seriesList.reduce(
-    (acc, s) => acc + (s.episodes?.filter((e) => e.status === "recorded" || e.status === "edited" || e.status === "uploaded").length || 0),
+  const recordedEpisodesCount = (seriesList || []).reduce(
+    (acc, s) => acc + (s?.episodes?.filter((e) => e?.status === "recorded" || e?.status === "edited" || e?.status === "uploaded")?.length || 0),
     0
   );
 
   // Active series completion %
-  const activeSeriesCompletedCount = activeSeries?.episodes?.filter((e) => e.status === "published").length || 0;
+  const activeSeriesCompletedCount = activeSeries?.episodes?.filter((e) => e?.status === "published")?.length || 0;
   const activeSeriesTotal = activeSeries?.episodes?.length || 0;
   const activeSeriesPercent = activeSeriesTotal > 0 ? Math.round((activeSeriesCompletedCount / activeSeriesTotal) * 100) : 0;
 
@@ -167,15 +161,33 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
   };
 
-  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const base64 = event.target?.result as string;
         setAvatarUrl(base64);
+        try {
+          await updateUserProfile({ avatarUrl: base64 });
+          setSavedSuccess(true);
+          setTimeout(() => setSavedSuccess(false), 2000);
+        } catch (err) {
+          console.warn("Auto-save avatar upload error:", err);
+        }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSelectPresetAvatar = async (url: string) => {
+    setAvatarUrl(url);
+    try {
+      await updateUserProfile({ avatarUrl: url });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2000);
+    } catch (err) {
+      console.warn("Auto-save preset avatar error:", err);
     }
   };
 
@@ -723,28 +735,52 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 </div>
 
                 {/* Preset Avatars */}
-                <div className="pt-2 border-t border-white/10">
-                  <div className="text-[11px] text-zinc-400 mb-2">Themed Preset Avatars:</div>
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    {PRESET_AVATARS.map((preset) => (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => setAvatarUrl(preset.url)}
-                        className={`p-1 rounded-xl border transition-all shrink-0 ${
-                          avatarUrl === preset.url
-                            ? "border-blue-400 ring-2 ring-blue-500/50 bg-blue-500/20"
-                            : "border-white/10 hover:border-white/30"
-                        }`}
-                        title={preset.name}
-                      >
-                        <img
-                          src={preset.url}
-                          alt={preset.name}
-                          className="w-9 h-9 rounded-lg object-cover"
-                        />
-                      </button>
-                    ))}
+                <div className="pt-2 border-t border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-zinc-400 font-semibold">Select Default Creator Avatar ({(PRESET_AVATARS || []).length} available):</span>
+                    {avatarUrl && (PRESET_AVATARS || []).some((p) => p.url === avatarUrl) && (
+                      <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">
+                        Active: {(PRESET_AVATARS || []).find((p) => p.url === avatarUrl)?.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2">
+                    {(PRESET_AVATARS || []).map((preset) => {
+                      const isSelected = avatarUrl === preset.url;
+                      return (
+                        <button
+                          key={preset.id || preset.name}
+                          type="button"
+                          onClick={() => handleSelectPresetAvatar(preset.url)}
+                          className={`group p-1.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center ${
+                            isSelected
+                              ? "border-blue-400 ring-2 ring-blue-500/50 bg-blue-500/20 shadow-md shadow-blue-500/20"
+                              : "border-white/10 hover:border-white/30 bg-[#0a0f1d]/60 hover:bg-[#0f172a]"
+                          }`}
+                          title={`${preset.name} • ${preset.role || "Avatar"}`}
+                        >
+                          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform bg-black/40">
+                            <img
+                              src={preset.url}
+                              alt={preset.name}
+                              className="w-full h-full object-cover"
+                            />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
+                                <Check className="w-4 h-4 text-white drop-shadow-md stroke-[3]" />
+                              </div>
+                            )}
+                          </div>
+                          <span
+                            className={`text-[10px] font-bold truncate max-w-full ${
+                              isSelected ? "text-blue-300" : "text-zinc-400 group-hover:text-zinc-200"
+                            }`}
+                          >
+                            {preset.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

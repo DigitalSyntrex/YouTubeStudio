@@ -2268,7 +2268,7 @@ export const ThumbnailBuilder: React.FC<ThumbnailBuilderProps> = ({
               <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between items-center">
                 <span>Badge Shape Style</span>
                 <span className="text-[10px] text-sky-400 font-mono">
-                  Current: {BADGE_STYLES.find((s) => s.id === (config.badgeStyle || "pill"))?.label}
+                  Current: {(BADGE_STYLES || []).find((s) => s.id === (config.badgeStyle || "pill"))?.label}
                 </span>
               </label>
 
@@ -2289,10 +2289,10 @@ export const ThumbnailBuilder: React.FC<ThumbnailBuilderProps> = ({
                   <div>
                     <div className="text-xs font-black text-slate-100 group-hover:text-sky-300 flex items-center gap-2">
                       <span>
-                        {BADGE_STYLES.find((s) => s.id === (config.badgeStyle || "pill"))?.label || "Rounded Pill"}
+                        {(BADGE_STYLES || []).find((s) => s.id === (config.badgeStyle || "pill"))?.label || "Rounded Pill"}
                       </span>
                       <span className="text-[10px] bg-sky-500/10 text-sky-400 px-1.5 py-0.5 rounded border border-sky-500/20 font-mono">
-                        {BADGE_STYLES.find((s) => s.id === (config.badgeStyle || "pill"))?.desc}
+                        {(BADGE_STYLES || []).find((s) => s.id === (config.badgeStyle || "pill"))?.desc}
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-0.5">

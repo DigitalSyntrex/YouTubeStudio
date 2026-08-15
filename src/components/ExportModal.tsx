@@ -13,11 +13,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({ episodes, onClose, onO
   const [copied, setCopied] = useState(false);
 
   const generateMarkdown = () => {
+    const epList = episodes || [];
     let md = `# Final Fantasy VI Pixel Remaster - YouTube Let's Play Playlist Plan\n\n`;
-    md += `Total Episodes: ${episodes.length}\n`;
-    md += `Estimated Total Duration: ~${(episodes.reduce((acc, c) => acc + c.estDurationMinutes, 0) / 60).toFixed(1)} hours\n\n`;
+    md += `Total Episodes: ${epList.length}\n`;
+    md += `Estimated Total Duration: ~${(epList.reduce((acc, c) => acc + (c?.estDurationMinutes || 90), 0) / 60).toFixed(1)} hours\n\n`;
 
-    episodes.forEach((ep) => {
+    epList.forEach((ep) => {
+      if (!ep) return;
       md += `## EP ${ep.partNumber < 10 ? `0${ep.partNumber}` : ep.partNumber}: ${ep.title}\n`;
       md += `- **World**: ${ep.world}\n`;
       md += `- **Estimated Duration**: ~${ep.estDurationMinutes} mins\n`;
@@ -25,7 +27,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ episodes, onClose, onO
       md += `- **End**: ${ep.endPoint}\n\n`;
       md += `### Description:\n\`\`\`\n${ep.description}\n\`\`\`\n\n`;
       md += `### Chapter Timestamps:\n`;
-      ep.chapters.forEach((c) => {
+      (ep.chapters || []).forEach((c) => {
         md += `- \`${c.timestamp}\` ${c.title}\n`;
       });
       md += `\n---\n\n`;
@@ -35,13 +37,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({ episodes, onClose, onO
   };
 
   const generateJson = () => {
-    return JSON.stringify(episodes, null, 2);
+    return JSON.stringify(episodes || [], null, 2);
   };
 
   const generateCsv = () => {
+    const epList = episodes || [];
     let csv = `"Part","World","Title","Est Minutes","Start Point","End Point","Status"\n`;
-    episodes.forEach((ep) => {
-      csv += `"${ep.partNumber}","${ep.world}","${ep.title.replace(/"/g, '""')}","${ep.estDurationMinutes}","${ep.startPoint.replace(/"/g, '""')}","${ep.endPoint.replace(/"/g, '""')}","${ep.status}"\n`;
+    epList.forEach((ep) => {
+      if (!ep) return;
+      csv += `"${ep.partNumber}","${ep.world}","${(ep.title || "").replace(/"/g, '""')}","${ep.estDurationMinutes || 90}","${(ep.startPoint || "").replace(/"/g, '""')}","${(ep.endPoint || "").replace(/"/g, '""')}","${ep.status}"\n`;
     });
     return csv;
   };

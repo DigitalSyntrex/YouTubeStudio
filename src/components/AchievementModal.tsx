@@ -32,6 +32,7 @@ import {
   saveAchievements,
 } from "../utils/achievementManager";
 import { INITIAL_ACHIEVEMENTS } from "../data/achievementsData";
+import { useAuth } from "../context/AuthContext";
 
 interface AchievementModalProps {
   isOpen: boolean;
@@ -101,6 +102,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
   onClose,
   onAchievementUpdate,
 }) => {
+  const { userProfile } = useAuth();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -173,12 +175,34 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Creator Avatar Chip */}
+            <div className="flex items-center gap-2 bg-[#0d1527] px-2.5 py-1.5 rounded-xl border border-cyan-500/30 shadow-inner">
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-cyan-600 to-blue-600 border border-cyan-400/50 flex items-center justify-center text-white text-[10px] font-black shrink-0">
+                {userProfile?.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
+              </div>
+              <div className="min-w-0 hidden sm:block text-left">
+                <div className="text-[8px] font-black uppercase tracking-widest text-cyan-400">
+                  Creator Tag
+                </div>
+                <div className="text-[11px] font-bold text-white truncate max-w-[100px]">
+                  {userProfile?.displayName || userProfile?.username || "Creator"}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Points Summary Banner */}

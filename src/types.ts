@@ -36,6 +36,8 @@ export interface PlaythroughSeries {
   useTitleLogo?: boolean; // Toggles displaying image logo vs plain text (default true if logo exists)
   gameSynopsis?: string; // AI web-scraped plot & story overview of the active game
   gameSynopsisSource?: string; // e.g. "Web Scraped via Google Search Grounding"
+  synopsis?: string; // Compatibility alias
+  synopsisSource?: string; // Compatibility alias
   subtitle: string;
   badgeText: string;
   accentColor: string;
@@ -100,6 +102,19 @@ export interface Episode {
   equipmentNotes?: string;
   thumbnailText?: string;
   suggestedThumbnailPrompt?: string;
+  missableAlerts?: MissableAlert[];
+}
+
+export interface MissableAlert {
+  id?: string;
+  episodePart?: number; // Optional reference to which episode it belongs
+  itemName: string;
+  category: "Weapon" | "Armor" | "Tool" | "Rune" | "Gesture" | "Key Item" | "NPC Quest" | "Secret Area" | "Boss / Ending" | "Collectible" | "Ability / Magic" | "Trophy / Achievement";
+  location: string;
+  howToGet: string;
+  lockoutTrigger: string; // Point of No Return / trigger that permanently disables this item
+  warning: string; // Emphasizes permanent unavailability if not obtained right here
+  isSecured?: boolean; // User checkoff tracking
 }
 
 export interface BossEntry {

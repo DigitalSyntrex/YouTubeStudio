@@ -88,8 +88,8 @@ export const BatchThumbnailExporterModal: React.FC<BatchThumbnailExporterModalPr
       : rawBadge || currentGameTitle.toUpperCase();
 
   // Selected episode IDs for batch exporting
-  const [selectedEpIds, setSelectedEpIds] = useState<number[]>(
-    episodes.map((e) => e.id)
+  const [selectedEpIds, setSelectedEpIds] = useState<number[]>(() =>
+    (episodes || []).map((e) => e.id)
   );
 
   // Active Branding Preset & Custom Adjustments
@@ -113,10 +113,10 @@ export const BatchThumbnailExporterModal: React.FC<BatchThumbnailExporterModalPr
 
   // Selection toggle handlers
   const handleToggleSelectAll = () => {
-    if (selectedEpIds.length === episodes.length) {
+    if (selectedEpIds.length === (episodes || []).length) {
       setSelectedEpIds([]);
     } else {
-      setSelectedEpIds(episodes.map((e) => e.id));
+      setSelectedEpIds((episodes || []).map((e) => e.id));
     }
   };
 

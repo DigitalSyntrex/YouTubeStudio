@@ -45,12 +45,8 @@ import {
   FileCheck
 } from "lucide-react";
 import { formatCompactNumber } from "./YouTubeStudioUploadModal";
-
-export interface CustomSynopsisEntry {
-  gameTitle: string;
-  synopsis: string;
-  sourceFile: string;
-}
+import { useAuth } from "../context/AuthContext";
+import { findSynopsisInDb, CustomSynopsisEntry } from "../utils/gameSynopsisDb";
 
 interface EpisodeListProps {
   episodes: Episode[];
@@ -79,10 +75,30 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
   onOpenYouTubeStudio,
   onUpdateSeriesSynopsis,
 }) => {
+  const { userProfile } = useAuth();
   const [search, setSearch] = useState("");
   const [worldFilter, setWorldFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [viewMode, setViewMode] = useState<"grid" | "list" | "kanban">("grid");
+  const [copiedEpisodeId, setCopiedEpisodeId] = useState<number | null>(null);
+
+  const handleCopyEpisodePackage = (e: React.MouseEvent, episode: Episode) => {
+    e.stopPropagation();
+    const chaptersText =
+      episode.chapters && episode.chapters.length > 0
+        ? `\n\nTIMESTAMPS:\n${episode.chapters.map((c) => `${c.timestamp} - ${c.title}`).join("\n")}`
+        : "";
+
+    const tagsText =
+      episode.tags && episode.tags.length > 0
+        ? `\n\nTAGS:\n${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`
+        : "";
+
+    const fullText = `${episode.title}\n\n${episode.description || ""}${chaptersText}${tagsText}`;
+    navigator.clipboard.writeText(fullText);
+    setCopiedEpisodeId(episode.id);
+    setTimeout(() => setCopiedEpisodeId(null), 2000);
+  };
 
   // Game Synopsis & Custom Synopsis Database state
   const [isSynopsisWindowMinimized, setIsSynopsisWindowMinimized] = useState(false);
@@ -155,15 +171,17 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
         return updated;
       });
 
-      const currentTitle = activeSeries?.gameTitle || gameTitle;
+      const currentTitle = activeSeries?.gameTitle || gameTitle || "";
       const activeMatch =
-        parsed.find(
-          (p) => p.gameTitle.toLowerCase().trim() === currentTitle.toLowerCase().trim()
+        (parsed || []).find(
+          (p) => p?.gameTitle && currentTitle && p.gameTitle.toLowerCase().trim() === currentTitle.toLowerCase().trim()
         ) ||
-        parsed.find(
+        (parsed || []).find(
           (p) =>
-            currentTitle.toLowerCase().includes(p.gameTitle.toLowerCase().trim()) ||
-            p.gameTitle.toLowerCase().trim().includes(currentTitle.toLowerCase().trim())
+            p?.gameTitle && currentTitle && (
+              currentTitle.toLowerCase().includes(p.gameTitle.toLowerCase().trim()) ||
+              p.gameTitle.toLowerCase().trim().includes(currentTitle.toLowerCase().trim())
+            )
         );
 
       if (activeMatch && onUpdateSeriesSynopsis && activeSeries) {
@@ -187,19 +205,21 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
 
   const handleRemoveFromDb = (title: string) => {
     setCustomDb((prev) => {
-      const updated = prev.filter((item) => item.gameTitle.toLowerCase().trim() !== title.toLowerCase().trim());
+      const updated = (prev || []).filter((item) => item?.gameTitle && item.gameTitle.toLowerCase().trim() !== title.toLowerCase().trim());
       localStorage.setItem("yt_custom_synopsis_db", JSON.stringify(updated));
       return updated;
     });
   };
 
-  const currentTitle = activeSeries?.gameTitle || gameTitle;
-  const activeDbMatch = customDb.find(
-    (entry) => entry.gameTitle.toLowerCase().trim() === currentTitle.toLowerCase().trim()
-  ) || customDb.find(
+  const currentTitle = activeSeries?.gameTitle || gameTitle || "";
+  const activeDbMatch = (customDb || []).find(
+    (entry) => entry?.gameTitle && currentTitle && entry.gameTitle.toLowerCase().trim() === currentTitle.toLowerCase().trim()
+  ) || (customDb || []).find(
     (entry) =>
-      currentTitle.toLowerCase().includes(entry.gameTitle.toLowerCase().trim()) ||
-      entry.gameTitle.toLowerCase().trim().includes(currentTitle.toLowerCase().trim())
+      entry?.gameTitle && currentTitle && (
+        currentTitle.toLowerCase().includes(entry.gameTitle.toLowerCase().trim()) ||
+        entry.gameTitle.toLowerCase().trim().includes(currentTitle.toLowerCase().trim())
+      )
   );
 
   const handleScrapeSynopsis = async () => {
@@ -230,31 +250,24 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
     }
   };
 
-  // Auto-apply game synopsis from custom DB library if matched by title, before defaulting to web scrape
+  // Auto-apply game synopsis from DB library (custom or built-in) if matched by title, before defaulting to live web scrape
   useEffect(() => {
-    if (!currentTitle) return;
+    if (!currentTitle || !activeSeries) return;
 
-    const dbMatch = customDb.find(
-      (entry) => entry.gameTitle.toLowerCase().trim() === currentTitle.toLowerCase().trim()
-    ) || customDb.find(
-      (entry) =>
-        currentTitle.toLowerCase().includes(entry.gameTitle.toLowerCase().trim()) ||
-        entry.gameTitle.toLowerCase().trim().includes(currentTitle.toLowerCase().trim())
-    );
+    const dbMatch = findSynopsisInDb(currentTitle, customDb);
 
-    if (dbMatch && activeSeries) {
-      const isCustomDbSource = activeSeries.gameSynopsisSource?.includes("Custom DB");
-      if (!activeSeries.gameSynopsis || (!isCustomDbSource && activeSeries.gameSynopsis !== dbMatch.synopsis)) {
+    if (dbMatch) {
+      if (!activeSeries.gameSynopsis || activeSeries.gameSynopsis !== dbMatch.synopsis) {
         if (onUpdateSeriesSynopsis) {
           onUpdateSeriesSynopsis(
             activeSeries.id,
             dbMatch.synopsis,
-            `Custom DB (${dbMatch.sourceFile || "Library"})`
+            dbMatch.sourceFile ? `DB Library (${dbMatch.sourceFile})` : "Official DB Library"
           );
         }
       }
     } else {
-      if (activeSeries && (!activeSeries.gameSynopsis || activeSeries.gameSynopsis.includes("An epic")) && !isScrapingSynopsis) {
+      if ((!activeSeries.gameSynopsis || activeSeries.gameSynopsis.includes("An epic")) && !isScrapingSynopsis) {
         handleScrapeSynopsis();
       }
     }
@@ -293,10 +306,10 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
   }, [isOverviewMinimized]);
 
   // Calculate Next Up Spotlight Episodes (lowest part numbers by pending status)
-  const sortedEpisodes = [...episodes].sort((a, b) => a.partNumber - b.partNumber);
-  const nextToRecord = sortedEpisodes.find((e) => e.status === "not_started");
-  const nextToEdit = sortedEpisodes.find((e) => e.status === "recorded");
-  const nextToUpload = sortedEpisodes.find((e) => e.status === "edited");
+  const sortedEpisodes = [...(episodes || [])].sort((a, b) => a.partNumber - b.partNumber);
+  const nextToRecord = (sortedEpisodes || []).find((e) => e?.status === "not_started");
+  const nextToEdit = (sortedEpisodes || []).find((e) => e?.status === "recorded");
+  const nextToUpload = (sortedEpisodes || []).find((e) => e?.status === "edited");
 
   // Calculate Series Runtime Statistics
   const totalMinutes = episodes.reduce((acc, curr) => acc + (curr.estDurationMinutes || 0), 0);
@@ -311,16 +324,19 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
   const progressPercent = episodes.length > 0 ? Math.round((publishedCount / episodes.length) * 100) : 0;
 
   // Extract unique worlds dynamically
-  const uniqueWorlds = Array.from(new Set(episodes.map((ep) => ep.world))).filter(Boolean);
+  const uniqueWorlds = Array.from(new Set((episodes || []).map((ep) => ep.world))).filter(Boolean);
 
-  const filteredEpisodes = episodes.filter((ep) => {
+  const filteredEpisodes = (episodes || []).filter((ep) => {
+    if (!ep) return false;
+    const searchLower = (search || "").toLowerCase();
     const matchesSearch =
-      ep.title.toLowerCase().includes(search.toLowerCase()) ||
-      ep.keyEvents.some((k) => k.toLowerCase().includes(search.toLowerCase())) ||
-      ep.startPoint.toLowerCase().includes(search.toLowerCase()) ||
-      ep.endPoint.toLowerCase().includes(search.toLowerCase()) ||
-      ep.partyMembers.some((p) => p.toLowerCase().includes(search.toLowerCase())) ||
-      ep.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+      !searchLower ||
+      (ep.title && ep.title.toLowerCase().includes(searchLower)) ||
+      (Array.isArray(ep.keyEvents) && ep.keyEvents.some((k) => k && k.toLowerCase().includes(searchLower))) ||
+      (ep.startPoint && ep.startPoint.toLowerCase().includes(searchLower)) ||
+      (ep.endPoint && ep.endPoint.toLowerCase().includes(searchLower)) ||
+      (Array.isArray(ep.partyMembers) && ep.partyMembers.some((p) => p && p.toLowerCase().includes(searchLower))) ||
+      (Array.isArray(ep.tags) && ep.tags.some((t) => t && t.toLowerCase().includes(searchLower)));
 
     const matchesWorld = worldFilter === "All" || ep.world === worldFilter;
     const matchesStatus = statusFilter === "All" || ep.status === statusFilter;
@@ -434,11 +450,20 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
             {(nextToRecord || nextToEdit || nextToUpload) && (
               <div className="pt-2 border-t border-white/10 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">
-                      Creator Focus: Next Up To Work On
-                    </h4>
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-5 h-5 rounded-md overflow-hidden bg-gradient-to-tr from-amber-600 to-amber-400 border border-amber-400/50 flex items-center justify-center text-white text-[9px] font-black shrink-0 shadow-sm">
+                      {userProfile?.avatarUrl ? (
+                        <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">
+                        {userProfile?.displayName ? `${userProfile.displayName}'s Creator Focus` : "Creator Focus: Next Up To Work On"}
+                      </h4>
+                    </div>
                   </div>
                   <span className="text-[10px] text-zinc-400 hidden sm:inline">
                     Click advance button to fast-track production
@@ -984,47 +1009,89 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                   <option value="published">🟢 Published</option>
                 </select>
 
-                {onOpenRecordingTimer && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenRecordingTimer(episode);
-                    }}
-                    title="Start Live REC Session Timer"
-                    className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-extrabold text-xs rounded border border-red-500/40 transition-all flex items-center gap-1 cursor-pointer"
-                  >
-                    <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                    <span className="hidden sm:inline">REC</span>
-                  </button>
-                )}
+                {/* Action Buttons Toolbar */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* 1. Start Live Recording Session */}
+                  {onOpenRecordingTimer && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenRecordingTimer(episode);
+                      }}
+                      title={`Start Live Recording Session (EP ${episode.partNumber})`}
+                      className="px-2.5 py-1 bg-[#2a131b] hover:bg-[#3d1926] text-red-200 font-bold text-xs rounded-lg border border-red-500/50 transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                    >
+                      <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+                      <span className="hidden sm:inline">REC</span>
+                    </button>
+                  )}
 
-                {onDuplicateEpisode && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDuplicateEpisode(episode);
-                    }}
-                    title="Clone Episode"
-                    className="p-1.5 bg-[#09090b] hover:bg-[#27272a] text-zinc-400 hover:text-cyan-300 rounded border border-white/10 transition-colors"
-                  >
-                    <CopyPlus className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                  {/* 2. YouTube Studio Upload and 1 Click Copy Panel */}
+                  {onOpenYouTubeStudio && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenYouTubeStudio(episode.id);
+                      }}
+                      title="Youtube Studio Upload and 1 Click Copy Panel"
+                      className="p-1.5 rounded-lg bg-[#2a131b]/60 hover:bg-red-900/60 text-red-400 hover:text-white transition-colors border border-red-500/40 cursor-pointer shadow-sm"
+                    >
+                      <Youtube className="w-3.5 h-3.5" />
+                    </button>
+                  )}
 
-                {onDeleteEpisode && (
+                  {/* 3. Duplicate/Clone Episode */}
+                  {onDuplicateEpisode && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicateEpisode(episode);
+                      }}
+                      title="Duplicate/Clone Episode"
+                      className="p-1.5 rounded-lg bg-[#09090b] hover:bg-[#27272a] text-zinc-300 hover:text-cyan-300 transition-colors border border-white/10 hover:border-cyan-400/40 cursor-pointer shadow-sm"
+                    >
+                      <CopyPlus className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  {/* 4. Copy Title and Description for Youtube Studio */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Delete Episode ${episode.partNumber}?`)) {
-                        onDeleteEpisode(episode.id);
-                      }
-                    }}
-                    title="Delete Episode"
-                    className="p-1.5 bg-[#09090b] hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded border border-white/10 transition-colors"
+                    type="button"
+                    onClick={(e) => handleCopyEpisodePackage(e, episode)}
+                    title="Copy Title and Description for Youtube Studio"
+                    className={`p-1.5 rounded-lg transition-colors border cursor-pointer shadow-sm ${
+                      copiedEpisodeId === episode.id
+                        ? "bg-emerald-950/80 border-emerald-500 text-emerald-300"
+                        : "bg-[#09090b] hover:bg-[#27272a] text-zinc-300 hover:text-white border-white/10 hover:border-cyan-400/40"
+                    }`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    {copiedEpisodeId === episode.id ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
                   </button>
-                )}
+
+                  {/* 5. Delete Episode */}
+                  {onDeleteEpisode && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Are you sure you want to delete Episode ${episode.partNumber}?`)) {
+                          onDeleteEpisode(episode.id);
+                        }
+                      }}
+                      title="Delete Episode"
+                      className="p-1.5 rounded-lg bg-[#09090b] hover:bg-red-950/80 text-zinc-400 hover:text-red-400 transition-colors border border-white/10 hover:border-red-500/50 cursor-pointer shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );

@@ -152,7 +152,7 @@ export const ThemeSwitcherModal: React.FC<ThemeSwitcherModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-200">
-                    Series Accent Color Tint ({activeSeries.gameTitle})
+                    Series Accent Color Tint ({activeSeries?.gameTitle || "Active Series"})
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">

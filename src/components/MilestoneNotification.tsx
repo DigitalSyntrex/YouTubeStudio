@@ -22,6 +22,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { PlaythroughSeries, Episode } from "../types";
+import { useAuth } from "../context/AuthContext";
 
 export type MilestonePercent = 25 | 50 | 75 | 100;
 
@@ -117,6 +118,7 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationModalProps>
   onClose,
   onOpenExport,
 }) => {
+  const { userProfile } = useAuth();
   if (!isOpen || !milestone) return null;
 
   const config = MILESTONE_CONFIGS[milestone.milestone] || MILESTONE_CONFIGS[25];
@@ -160,8 +162,20 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationModalProps>
             </div>
 
             <div className="flex justify-center my-2">
-              <div className="w-20 h-20 rounded-3xl bg-white/10 border-2 border-white/30 flex items-center justify-center shadow-2xl backdrop-blur-md">
-                {config.icon}
+              <div className="relative">
+                <div className="w-20 h-20 rounded-3xl bg-white/10 border-2 border-white/30 flex items-center justify-center shadow-2xl backdrop-blur-md">
+                  {config.icon}
+                </div>
+                {/* Creator Avatar Badge Overlay */}
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white/80 bg-zinc-950 overflow-hidden shadow-lg flex items-center justify-center">
+                  {userProfile?.avatarUrl ? (
+                    <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-black text-amber-300">
+                      {(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -170,7 +184,7 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationModalProps>
             </h2>
 
             <p className="text-sm font-semibold text-zinc-200 max-w-md mx-auto">
-              {series.gameTitle}: <span className="text-amber-300 font-extrabold">{milestone.milestone}% Production Goal Reached!</span>
+              {series?.gameTitle || "Gaming Series"}: <span className="text-amber-300 font-extrabold">{milestone.milestone}% Production Goal Reached!</span>
             </p>
           </div>
 

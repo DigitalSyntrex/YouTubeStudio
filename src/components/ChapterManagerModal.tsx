@@ -17,8 +17,8 @@ export const ChapterManagerModal: React.FC<ChapterManagerModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [selectedEpId, setSelectedEpId] = useState<number>(episodes[0]?.id || 0);
-  const currentEp = episodes.find((e) => e.id === selectedEpId) || episodes[0];
+  const [selectedEpId, setSelectedEpId] = useState<number>(episodes?.[0]?.id || 0);
+  const currentEp = (episodes || []).find((e) => e?.id === selectedEpId) || episodes?.[0];
 
   const [chapters, setChapters] = useState<Chapter[]>(currentEp?.chapters || [
     { timestamp: "00:00", title: "Episode Introduction" },
@@ -32,7 +32,7 @@ export const ChapterManagerModal: React.FC<ChapterManagerModalProps> = ({
   // Sync state when selected episode changes
   const handleSelectEpisode = (epId: number) => {
     setSelectedEpId(epId);
-    const ep = episodes.find((e) => e.id === epId);
+    const ep = (episodes || []).find((e) => e?.id === epId);
     if (ep) {
       setChapters(ep.chapters && ep.chapters.length > 0 ? ep.chapters : [
         { timestamp: "00:00", title: "Introduction & Recount" },

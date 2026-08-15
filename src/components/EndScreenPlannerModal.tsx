@@ -17,10 +17,10 @@ export const EndScreenPlannerModal: React.FC<EndScreenPlannerModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const currentEp = selectedEpisode || episodes[0];
+  const currentEp = selectedEpisode || episodes?.[0];
 
-  const nextEp = episodes.find((e) => e.partNumber === (currentEp?.partNumber || 1) + 1) || episodes[1];
-  const prevEp = episodes.find((e) => e.partNumber === (currentEp?.partNumber || 1) - 1) || episodes[0];
+  const nextEp = (episodes || []).find((e) => e?.partNumber === (currentEp?.partNumber || 1) + 1) || episodes?.[1];
+  const prevEp = (episodes || []).find((e) => e?.partNumber === (currentEp?.partNumber || 1) - 1) || episodes?.[0];
 
   const [cards, setCards] = useState([
     { id: "1", type: "Next Episode", title: nextEp ? `Ep ${nextEp.partNumber}: ${nextEp.shortTitle}` : "Next Playthrough Video", pos: "top-right" },

@@ -43,11 +43,15 @@ export function loadAchievements(): Achievement[] {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ACHIEVEMENTS));
       return INITIAL_ACHIEVEMENTS;
     }
-    const parsed: Achievement[] = JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ACHIEVEMENTS));
+      return INITIAL_ACHIEVEMENTS;
+    }
     
     // Merge new achievements if initial list has been expanded
     const merged = INITIAL_ACHIEVEMENTS.map((initial) => {
-      const existing = parsed.find((p) => p.id === initial.id);
+      const existing = parsed.find((p) => p && p.id === initial.id);
       return existing ? { ...initial, ...existing } : initial;
     });
     

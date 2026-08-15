@@ -23,13 +23,13 @@ export const BatchEpisodeEditorModal: React.FC<BatchEpisodeEditorModalProps> = (
   const [durationToSet, setDurationToSet] = useState<number>(120);
   const [copied, setCopied] = useState<boolean>(false);
 
-  const isAllSelected = selectedIds.length === episodes.length && episodes.length > 0;
+  const isAllSelected = selectedIds.length === (episodes || []).length && (episodes || []).length > 0;
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(episodes.map((e) => e.id));
+      setSelectedIds((episodes || []).map((e) => e.id));
     }
   };
 
@@ -43,7 +43,7 @@ export const BatchEpisodeEditorModal: React.FC<BatchEpisodeEditorModalProps> = (
 
   const handleApplyStatusChange = () => {
     if (selectedIds.length === 0) return;
-    const updated = episodes.map((ep) => {
+    const updated = (episodes || []).map((ep) => {
       if (selectedIds.includes(ep.id)) {
         return { ...ep, status: targetStatus };
       }
@@ -54,7 +54,7 @@ export const BatchEpisodeEditorModal: React.FC<BatchEpisodeEditorModalProps> = (
 
   const handleApplyTagAppend = () => {
     if (selectedIds.length === 0 || !tagToAppend.trim()) return;
-    const updated = episodes.map((ep) => {
+    const updated = (episodes || []).map((ep) => {
       if (selectedIds.includes(ep.id)) {
         const existingTags = ep.tags || [];
         if (!existingTags.includes(tagToAppend)) {
@@ -68,7 +68,7 @@ export const BatchEpisodeEditorModal: React.FC<BatchEpisodeEditorModalProps> = (
 
   const handleApplyDurationSet = () => {
     if (selectedIds.length === 0) return;
-    const updated = episodes.map((ep) => {
+    const updated = (episodes || []).map((ep) => {
       if (selectedIds.includes(ep.id)) {
         return { ...ep, estDurationMinutes: durationToSet };
       }
@@ -78,7 +78,7 @@ export const BatchEpisodeEditorModal: React.FC<BatchEpisodeEditorModalProps> = (
   };
 
   const handleCopyDescriptions = () => {
-    const selectedEps = episodes.filter((e) => selectedIds.includes(e.id));
+    const selectedEps = (episodes || []).filter((e) => selectedIds.includes(e.id));
     if (selectedEps.length === 0) return;
 
     const formatted = selectedEps
@@ -94,7 +94,7 @@ export const BatchEpisodeEditorModal: React.FC<BatchEpisodeEditorModalProps> = (
   };
 
   const handleAutoChainMilestones = () => {
-    if (episodes.length === 0) return;
+    if ((episodes || []).length === 0) return;
     const sorted = [...episodes].sort((a, b) => a.partNumber - b.partNumber);
     const updated = sorted.map((ep, idx) => {
       if (idx === 0) return ep;

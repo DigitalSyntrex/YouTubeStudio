@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Episode, PlaythroughSeries } from "../types";
-import { X, Printer, Download, Copy, Check, FileText, CheckSquare, Sparkles, BookOpen, ListChecks } from "lucide-react";
+import { X, Printer, Download, Copy, Check, FileText, CheckSquare, Sparkles, BookOpen, ListChecks, User } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 interface PrintCheatSheetModalProps {
-  series: PlaythroughSeries;
+  series?: PlaythroughSeries;
   episodes: Episode[];
   onClose: () => void;
 }
@@ -13,6 +14,8 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
   episodes,
   onClose,
 }) => {
+  const { userProfile } = useAuth();
+  const gameTitle = series?.gameTitle || "Gaming Series";
   const [layoutMode, setLayoutMode] = useState<"planner" | "checklist" | "bosses">("planner");
   const [includeNoteLines, setIncludeNoteLines] = useState<boolean>(true);
   const [includeTimestamps, setIncludeTimestamps] = useState<boolean>(true);
@@ -31,8 +34,8 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
   // Generate plain text cheat sheet for downloading or copying
   const generateTextCheatSheet = () => {
     let txt = `========================================================================\n`;
-    txt += `${series.gameTitle.toUpperCase()} - PLAYTHROUGH CHEAT SHEET & NOTES\n`;
-    txt += `Series: ${series.subtitle || series.playthroughType || "100% Walkthrough"}\n`;
+    txt += `${gameTitle.toUpperCase()} - PLAYTHROUGH CHEAT SHEET & NOTES\n`;
+    txt += `Series: ${series?.subtitle || series?.playthroughType || "100% Walkthrough"}\n`;
     txt += `Total Episodes: ${episodes.length} | Est Total Playtime: ~${(episodes.reduce((a, b) => a + b.estDurationMinutes, 0) / 60).toFixed(1)} Hours\n`;
     txt += `Generated: ${new Date().toLocaleDateString()}\n`;
     txt += `========================================================================\n\n`;
@@ -102,7 +105,7 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${series.gameTitle.replace(/\s+/g, "_")}_Playthrough_CheatSheet.txt`;
+    a.download = `${gameTitle.replace(/\s+/g, "_")}_Playthrough_CheatSheet.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -314,16 +317,30 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
           >
             {/* Document Header */}
             <div className="border-b-2 border-zinc-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <div className="text-xs font-black uppercase tracking-widest text-zinc-600">
-                  PLAYTHROUGH CHEAT SHEET & PRODUCTION NOTES
+              <div className="flex items-center gap-3">
+                {/* Creator Avatar */}
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-300 flex items-center justify-center text-zinc-100 font-bold text-sm shrink-0">
+                  {userProfile?.avatarUrl ? (
+                    <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
+                  )}
                 </div>
-                <h1 className="text-2xl font-black text-zinc-950 tracking-tight mt-0.5">
-                  {series.gameTitle}
-                </h1>
-                <p className="text-sm font-semibold text-zinc-700">
-                  {series.subtitle || series.playthroughType || "100% Walkthrough & Let's Play"}
-                </p>
+                <div>
+                  <div className="text-xs font-black uppercase tracking-widest text-zinc-600 flex items-center gap-1.5">
+                    <span>PLAYTHROUGH CHEAT SHEET</span>
+                    <span>•</span>
+                    <span className="text-blue-700 font-bold">
+                      {userProfile?.displayName || userProfile?.username || "Creator"}
+                    </span>
+                  </div>
+                  <h1 className="text-2xl font-black text-zinc-950 tracking-tight mt-0.5">
+                    {gameTitle}
+                  </h1>
+                  <p className="text-sm font-semibold text-zinc-700">
+                    {series?.subtitle || series?.playthroughType || "100% Walkthrough & Let's Play"}
+                  </p>
+                </div>
               </div>
 
               <div className="text-left sm:text-right text-xs font-mono text-zinc-800 space-y-0.5 border-l-2 sm:border-l-0 sm:border-r-2 border-zinc-900 pl-3 sm:pl-0 sm:pr-3">
@@ -381,7 +398,7 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
                   Episode Planner & Notes Log
                 </h3>
 
-                {episodes.map((ep) => (
+                {(episodes || []).map((ep) => (
                   <div
                     key={ep.id}
                     className="border border-zinc-300 rounded-lg p-4 space-y-3 page-break-inside-avoid bg-zinc-50/50"
@@ -535,7 +552,7 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {episodes.map((ep) => (
+                    {(episodes || []).map((ep) => (
                       <tr key={ep.id} className="border-b border-zinc-300 page-break-inside-avoid">
                         <td className="p-2 font-mono font-bold text-center border-r border-zinc-300">
                           {ep.partNumber}
@@ -644,7 +661,7 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
 
             {/* Footer */}
             <div className="border-t border-zinc-300 pt-3 text-center text-[10px] text-zinc-500 font-mono flex justify-between items-center">
-              <span>{series.gameTitle} - YouTube Let's Play Studio Cheat Sheet</span>
+              <span>{gameTitle} - YouTube Let's Play Studio Cheat Sheet</span>
               <span>Keep notes on physical prints or PDF tablets</span>
             </div>
           </div>

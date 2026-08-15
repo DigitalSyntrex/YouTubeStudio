@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, Download, CheckCircle, Clock, BookOpen, Layers, Image, Type, Plus, Gamepad2, Trash2, AlertTriangle, Swords, UserCheck, Target, Cloud, FileJson, Upload, RefreshCw, ShieldCheck, HardDrive, Check, X, ChevronDown, GitBranch, Zap, TrendingUp, Mic, BarChart3, Wand2, Tv, Key, Smartphone, Palette, Printer, Home, LayoutGrid, Radio, Youtube, Sun, Moon, FolderKanban, Film, CheckCircle2, Settings, Trophy, Award, Database, Edit2 } from "lucide-react";
+import { Play, Sparkles, Download, CheckCircle, Clock, BookOpen, Layers, Image, Type, Plus, Gamepad2, Trash2, AlertTriangle, Swords, UserCheck, Target, Cloud, FileJson, Upload, RefreshCw, ShieldCheck, HardDrive, Check, X, ChevronDown, GitBranch, Zap, TrendingUp, Mic, BarChart3, Wand2, Tv, Key, Smartphone, Palette, Printer, Home, LayoutGrid, Radio, Youtube, Sun, Moon, FolderKanban, Film, CheckCircle2, Settings, Trophy, Award, Database, Edit2, User } from "lucide-react";
 import { Episode, PLAYTHROUGH_TYPES, PlaythroughSeries } from "../types";
+import { defaultPlaythroughSeries } from "../data/episodesData";
 import { MilestoneBellDropdown, MilestoneRecord } from "./MilestoneNotification";
 import { safeFetchJson } from "../utils/apiUtils";
 import { AppThemeId, THEME_CONFIGS } from "../utils/themeUtils";
-import { StudioTitleBanner } from "./StudioTitleBanner";
-import { StudioBannerModal, StudioBannerConfig, DEFAULT_STUDIO_BANNER_CONFIG } from "./StudioBannerModal";
 import { AchievementModal } from "./AchievementModal";
 import { calculateGamerscore, loadAchievements, triggerAchievement } from "../utils/achievementManager";
 import { SynopsisDbModal } from "./SynopsisDbModal";
-import defaultStudioLogo from "../assets/playthrough_studio_logo.svg";
+import { useAuth } from "../context/AuthContext";
 
 interface HeaderProps {
   seriesList: PlaythroughSeries[];
@@ -32,6 +31,7 @@ interface HeaderProps {
   onOpenQuestBranchTracker?: () => void;
   onOpenBossWeaknessCards?: () => void;
   onUpdateSeriesSynopsis?: (seriesId: string, synopsis: string, source?: string) => void;
+  onOpenAccountSettings?: () => void;
 
   // View mode navigation
   currentView?: "landing" | "playthrough";
@@ -58,6 +58,7 @@ interface HeaderProps {
   onOpenYouTubeStudio?: () => void;
   onOpenBossEncounterPlanner?: () => void;
   onOpenCompletionDashboard?: () => void;
+  onOpenMissablesLockoutsModal?: () => void;
   // Milestone Notifications Props
   milestoneHistory?: MilestoneRecord[];
   onSelectMilestone?: (m: MilestoneRecord) => void;
@@ -110,10 +111,13 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenYouTubeStudio,
   onOpenBossEncounterPlanner,
   onOpenCompletionDashboard,
+  onOpenMissablesLockoutsModal,
   onOpenGameLogoModal,
   onUpdateSeriesLogo,
   onUpdateSeriesSynopsis,
+  onOpenAccountSettings,
 }) => {
+  const { userProfile } = useAuth();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showBackupSyncModal, setShowBackupSyncModal] = useState(false);
   const [showDataExportMenu, setShowDataExportMenu] = useState(false);
@@ -126,8 +130,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [editableSynopsis, setEditableSynopsis] = useState("");
   const [isScrapingSynopsis, setIsScrapingSynopsis] = useState(false);
 
-  const sortedSeriesList = [...seriesList].sort((a, b) => a.gameTitle.localeCompare(b.gameTitle));
-  const activeSeries = sortedSeriesList.find((s) => s.id === activeSeriesId) || sortedSeriesList[0] || seriesList[0];
+  const sortedSeriesList = [...(seriesList || [])].sort((a, b) => (a?.gameTitle || "").localeCompare(b?.gameTitle || ""));
+  const activeSeries = (sortedSeriesList || []).find((s) => s?.id === activeSeriesId) || sortedSeriesList[0] || seriesList?.[0];
 
   const handleScrapeSynopsis = async () => {
     if (!activeSeries?.gameTitle) return;
@@ -321,20 +325,6 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  // Studio Front & Center Title Banner State
-  const [bannerConfig, setBannerConfig] = useState<StudioBannerConfig>(() => {
-    const saved = localStorage.getItem("youtube_studio_banner_config");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return DEFAULT_STUDIO_BANNER_CONFIG;
-  });
-
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [gamerscore, setGamerscore] = useState(() => calculateGamerscore(loadAchievements()));
 
@@ -346,13 +336,7 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener("achievement_unlocked", handleUnlocked);
   }, []);
 
-  const handleSaveBannerConfig = (newConfig: StudioBannerConfig) => {
-    setBannerConfig(newConfig);
-    localStorage.setItem("youtube_studio_banner_config", JSON.stringify(newConfig));
-    triggerAchievement("brand_architect");
-  };
-
-  // Stats for Studio Title Banner
+  // Stats for Production Metrics Bar
   const totalSeriesCount = seriesList.length;
   const totalEpisodesCount = seriesList.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
   const totalCompletedEpisodes = seriesList.reduce(
@@ -372,8 +356,8 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-[#121212] border-b border-white/10 text-zinc-100 py-2.5 px-3 sm:px-5 lg:px-6">
       <div className="max-w-7xl mx-auto space-y-3">
-        {/* View Mode & Hub Navigation Bar with Inline Center Studio Logo */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 border-b border-white/10 pb-2.5">
+        {/* View Mode & Hub Navigation Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-white/10 pb-2.5">
           {/* Left: Studio Navigation Buttons */}
           <div className="flex items-center gap-1 bg-[#09090b] p-1 rounded-xl border border-white/10 shrink-0">
             <button
@@ -400,51 +384,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Center: Front & Center Studio Logo & Arced Title (Fluidly Responsive) */}
-          <div
-            className="flex-1 min-w-0 flex flex-col items-center justify-center relative group cursor-pointer my-1 md:my-0 transition-all duration-300 hover:scale-[1.02]"
-            onClick={() => setShowBannerModal(true)}
-            title="Customize Studio Logo & Banner"
-          >
-            {/* Arced Studio Title Above Crest - Raised with increased font size and zero overlap */}
-            <div className="w-full flex justify-center -mb-2 sm:-mb-3.5 md:-mb-5 lg:-mb-6 xl:-mb-7 z-20 pointer-events-none transition-all duration-300 overflow-visible">
-              <svg
-                viewBox="0 0 1200 110"
-                className="w-full max-w-[320px] min-[400px]:max-w-[400px] sm:max-w-[540px] md:max-w-[680px] lg:max-w-[820px] xl:max-w-[960px] 2xl:max-w-[1080px] h-auto overflow-visible transition-all duration-300"
-              >
-                <defs>
-                  <linearGradient id="headerArcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffffff" />
-                    <stop offset="45%" stopColor="#f1f5f9" />
-                    <stop offset="100%" stopColor="#94a3b8" />
-                  </linearGradient>
-                  <filter id="headerTextGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000000" floodOpacity="0.95" />
-                    <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#38bdf8" floodOpacity="0.75" />
-                  </filter>
-                  <path id="bannerArcPath" d="M 40 68 Q 600 12 1160 68" fill="none" />
-                </defs>
-                <text fontSize="64" fontWeight="900" letterSpacing="8" fill="url(#headerArcGrad)" stroke="#020617" strokeWidth="3" filter="url(#headerTextGlow)">
-                  <textPath href="#bannerArcPath" startOffset="50%" textAnchor="middle">
-                    {bannerConfig.studioName || "PLAYTHROUGH STUDIO PRO"}
-                  </textPath>
-                </text>
-              </svg>
-            </div>
-
-            {/* Shield Logo Frame - Clean borderless layout */}
-            <div className="relative py-1 px-3 sm:py-1.5 sm:px-6 md:py-2 md:px-8 lg:py-2.5 lg:px-10 bg-[#080d1a]/60 rounded-xl sm:rounded-2xl border-0 shadow-lg shadow-cyan-950/40 flex items-center justify-center backdrop-blur-md transition-all duration-300">
-              <img
-                src={bannerConfig.logoUrl && bannerConfig.logoUrl.trim().length > 0 ? bannerConfig.logoUrl : defaultStudioLogo}
-                alt={bannerConfig.studioName || "Playthrough Studio"}
-                className="h-10 min-[400px]:h-12 sm:h-16 md:h-20 lg:h-24 xl:h-28 2xl:h-32 w-auto object-contain filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] transition-all duration-300"
-              />
-              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </div>
-
           {/* Right: Points, Milestones & Engine Status */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap justify-end">
             {/* Points Trophy Badge Button */}
             <button
               onClick={() => setShowAchievementModal(true)}
@@ -502,41 +443,27 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Streamlined Playthrough Series Banner & Hero Metrics Ticker */}
         <div className="bg-gradient-to-r from-blue-950/90 via-[#0d1326]/90 to-indigo-950/90 p-3 sm:p-4 rounded-2xl border border-blue-500/40 shadow-xl shadow-blue-950/40 space-y-3 backdrop-blur-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
-              {activeSeries?.coverImage ? (
-                <img
-                  src={activeSeries.coverImage}
-                  alt={activeSeries.gameTitle}
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-cyan-400/80 shadow-md shadow-cyan-950/50 shrink-0 hover:scale-105 transition-transform"
-                />
-              ) : (
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-500/20 border border-blue-400/50 flex items-center justify-center text-blue-300 shadow-md shadow-blue-500/30 shrink-0">
-                  <Gamepad2 className="w-6 h-6 text-cyan-300 animate-pulse" />
-                </div>
-              )}
+            <div className="flex-1 min-w-[280px] space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-[9px] font-black uppercase text-cyan-300 tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>ACTIVE SERIES PLANNER</span>
+                </span>
+              </div>
 
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-[9px] font-black uppercase text-cyan-300 tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span>ACTIVE SERIES PLANNER</span>
-                  </span>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <select
-                      value={activeSeriesId}
-                      onChange={(e) => onSelectSeries(e.target.value)}
-                      className="bg-[#090d16] border border-blue-400/60 hover:border-cyan-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/30 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-extrabold text-white focus:outline-none max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl truncate transition-all cursor-pointer shadow-inner shadow-black/60"
-                    >
-                      {sortedSeriesList.map((s) => (
-                        <option key={s.id} value={s.id} className="bg-[#0f172a] text-white font-semibold py-1 text-xs sm:text-sm">
-                          {s.gameTitle} ({s.episodes.length} Ep • {s.playthroughType || "100% Walkthrough"} • {formatSeriesDate(s.createdAt)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <select
+                    value={activeSeriesId}
+                    onChange={(e) => onSelectSeries(e.target.value)}
+                    className="bg-[#090d16] border border-blue-400/60 hover:border-cyan-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/30 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-extrabold text-white focus:outline-none max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl truncate transition-all cursor-pointer shadow-inner shadow-black/60"
+                  >
+                    {sortedSeriesList.map((s) => (
+                      <option key={s.id} value={s.id} className="bg-[#0f172a] text-white font-semibold py-1 text-xs sm:text-sm">
+                        {s.gameTitle} ({s.episodes.length} Ep • {s.playthroughType || "100% Walkthrough"} • {formatSeriesDate(s.createdAt)})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -601,28 +528,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Main Header Row with Iconography Navigation & Studio Suite */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
           {/* Active Series Branding with Prominent Large Game Title */}
-          <div className="flex items-center gap-3">
-            {activeSeries?.coverImage ? (
-              <img
-                src={activeSeries.coverImage}
-                alt={activeSeries.gameTitle}
-                className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-amber-400/80 shadow-xl shadow-amber-950/50 shrink-0 hover:scale-105 transition-transform"
-              />
-            ) : (
-              <div
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl p-0.5 shadow-lg shadow-blue-950/40 shrink-0"
-                style={{ background: `linear-gradient(135deg, ${activeSeries?.accentColor || "#38bdf8"}, #6366f1)` }}
-              >
-                <div className="w-full h-full bg-[#09090b] rounded-[10px] flex items-center justify-center">
-                  <Play className="w-5 h-5 text-blue-400 fill-blue-400/20 ml-0.5" />
-                </div>
-              </div>
-            )}
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                  YouTube Studio Planner
-                </span>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                YouTube Studio Planner
+              </span>
 
                 <span
                   className="text-[11px] font-medium px-2 py-0.5 rounded border"
@@ -734,7 +644,6 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
             </div>
-          </div>
 
           {/* Iconography-based Toolbar & Studio Suite Dropdown Navigation */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -1142,6 +1051,19 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
                           </button>
                         )}
+
+                        {onOpenMissablesLockoutsModal && (
+                          <button
+                            onClick={() => { onOpenMissablesLockoutsModal(); setShowStudioSuiteMenu(false); }}
+                            className="flex items-start gap-2 p-2 text-left bg-zinc-900/60 hover:bg-zinc-800/90 border border-amber-500/40 hover:border-amber-400 rounded-xl transition-all cursor-pointer group"
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-extrabold text-amber-300 group-hover:text-amber-200 truncate">Critical Missables & Lockouts</div>
+                              <p className="text-[10px] text-zinc-400 truncate">Story point of no return alerts</p>
+                            </div>
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1226,6 +1148,8 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               )}
             </div>
+
+
           </div>
         </div>
 
@@ -1281,7 +1205,7 @@ export const Header: React.FC<HeaderProps> = ({
                   value={editableSynopsis}
                   onChange={(e) => setEditableSynopsis(e.target.value)}
                   rows={2}
-                  className="w-full bg-[#080c18] border border-cyan-500/50 rounded-lg p-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                  className="w-full bg-[#080c18] border border-cyan-500/50 rounded-lg p-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-400 custom-synopsis-scrollbar"
                   placeholder="Enter custom game story & world synopsis..."
                 />
                 <div className="flex items-center justify-end gap-1.5">
@@ -1305,12 +1229,14 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
             ) : (
-              <div>
-                <p className="text-xs text-zinc-200 line-clamp-3 leading-relaxed italic mt-0.5">
-                  {activeSeries?.gameSynopsis ? `"${activeSeries.gameSynopsis}"` : "No game synopsis loaded for this active series."}
-                </p>
+              <div className="flex flex-col justify-between flex-1 min-h-0 pt-0.5">
+                <div className="max-h-[62px] sm:max-h-[74px] overflow-y-auto pr-1.5 custom-synopsis-scrollbar">
+                  <p className="text-xs text-zinc-200 leading-relaxed italic">
+                    {activeSeries?.gameSynopsis ? `"${activeSeries.gameSynopsis}"` : "No game synopsis loaded for this active series."}
+                  </p>
+                </div>
                 {activeSeries?.gameSynopsisSource && (
-                  <span className="text-[9px] text-zinc-500 font-mono block mt-1 truncate">
+                  <span className="text-[9px] text-zinc-500 font-mono block mt-1 truncate shrink-0">
                     Source: {activeSeries.gameSynopsisSource}
                   </span>
                 )}
@@ -1546,6 +1472,27 @@ export const Header: React.FC<HeaderProps> = ({
                     className="hidden"
                   />
                 </label>
+
+                {/* 5. Restore All Curated Default Playthroughs */}
+                <button
+                  onClick={() => {
+                    const existingIds = new Set(seriesList.map((s) => s.id));
+                    const missingDefaults = defaultPlaythroughSeries.filter((ds) => !existingIds.has(ds.id));
+                    const merged = [...seriesList, ...missingDefaults];
+                    onImportSeriesList?.(merged);
+                    onSelectSeries("bloodborne");
+                    setBackupMsg(`Loaded all 5 curated series (Bloodborne, Mafia, FF16, FF6, Chrono Trigger)!`);
+                  }}
+                  className="p-3.5 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 rounded-xl text-left space-y-1.5 transition-all group sm:col-span-2 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 text-rose-300 font-bold text-xs">
+                    <Sparkles className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                    <span>Restore / Merge All Curated Playthroughs (Bloodborne, Mafia, FF16, FF6, Chrono Trigger)</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-normal">
+                    Restores all official curated longform playthrough series into your catalog without losing your existing progress.
+                  </p>
+                </button>
               </div>
             </div>
 
@@ -1564,14 +1511,6 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       )}
-
-      {/* Studio Banner Settings Modal */}
-      <StudioBannerModal
-        isOpen={showBannerModal}
-        onClose={() => setShowBannerModal(false)}
-        config={bannerConfig}
-        onSave={handleSaveBannerConfig}
-      />
 
       {/* Gamerscore & Trophies Showcase Modal */}
       <AchievementModal

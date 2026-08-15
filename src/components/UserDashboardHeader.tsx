@@ -44,9 +44,13 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
     <div className="bg-gradient-to-r from-[#0d1222] via-[#090c17] to-[#0d111d] border-b border-blue-500/20 text-zinc-100 py-3.5 px-4 sm:px-6 lg:px-8 shadow-xl relative z-30">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
         {/* Left: User Profile badge & Channel info */}
-        <div className="flex items-center gap-3.5 min-w-0">
+        <div
+          onClick={onOpenSettings}
+          className="flex items-center gap-3.5 min-w-0 cursor-pointer group p-1 -m-1 rounded-2xl hover:bg-white/5 transition-all"
+          title="Click to customize Creator Avatar & Profile Settings"
+        >
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/40 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-900/40">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/40 group-hover:border-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-900/40 transition-all">
               {userProfile?.avatarUrl ? (
                 <img src={userProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -58,8 +62,8 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-extrabold text-white truncate">
-                {userProfile?.displayName || userProfile?.username}
+              <span className="text-sm font-extrabold text-white group-hover:text-cyan-300 transition-colors truncate">
+                {userProfile?.displayName || userProfile?.username || "Creator"}
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-cyan-300 border border-blue-500/30 shrink-0">
                 Creator

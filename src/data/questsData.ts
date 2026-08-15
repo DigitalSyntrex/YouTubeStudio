@@ -1,4 +1,7 @@
 import { QuestEntry } from "../types";
+import { bloodborneQuests } from "./bloodborneData";
+
+export { bloodborneQuests };
 
 export const defaultFF6Quests: QuestEntry[] = [
   {

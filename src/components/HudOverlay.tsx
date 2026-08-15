@@ -28,9 +28,9 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   currentEpisodeId
 }) => {
   const episode =
-    episodes.find((e) => e.id === currentEpisodeId) ||
-    episodes.find((e) => e.status === "not_started") ||
-    episodes[0];
+    (episodes || []).find((e) => e?.id === currentEpisodeId) ||
+    (episodes || []).find((e) => e?.status === "not_started") ||
+    episodes?.[0];
 
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [seconds, setSeconds] = useState<number>(0);

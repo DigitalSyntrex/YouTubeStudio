@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Episode, PlaythroughSeries, QuestEntry, BossEntry, LootEntry } from "../types";
 import { getBossAndLootForSeries } from "../data/bossLootData";
+import { useAuth } from "../context/AuthContext";
 
 interface CompletionDashboardModalProps {
   activeSeries?: PlaythroughSeries;
@@ -38,6 +39,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
   quests = [],
   onClose
 }) => {
+  const { userProfile } = useAuth();
   const seriesId = activeSeries?.id || "default";
 
   // Load bosses and loot state
@@ -169,7 +171,27 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            {/* Creator Avatar Chip */}
+            <div className="flex items-center gap-2 bg-zinc-950/80 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 shadow-inner">
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-emerald-600 to-teal-600 border border-emerald-400/50 flex items-center justify-center text-white text-[10px] font-black shrink-0">
+                {userProfile?.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
+              </div>
+              <div className="min-w-0 hidden sm:block text-left">
+                <div className="text-[8px] font-black uppercase tracking-widest text-emerald-400">
+                  Creator Tag
+                </div>
+                <div className="text-[11px] font-bold text-white truncate max-w-[100px]">
+                  {userProfile?.displayName || userProfile?.username || "Creator"}
+                </div>
+              </div>
+            </div>
+
             <button
               onClick={handleCopyGuide}
               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black shadow flex items-center gap-1.5 cursor-pointer transition-all"

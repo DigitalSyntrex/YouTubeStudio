@@ -38,12 +38,14 @@ import { MirillisActionIntegrationModal } from "./components/MirillisActionInteg
 import { YouTubeStudioUploadModal } from "./components/YouTubeStudioUploadModal";
 import { BossEncounterPlannerModal } from "./components/BossEncounterPlannerModal";
 import { CompletionDashboardModal } from "./components/CompletionDashboardModal";
+import { MissableItemsLockoutsModal } from "./components/MissableItemsLockoutsModal";
 import { GameTitleLogoModal } from "./components/GameTitleLogoModal";
 import { HudOverlay } from "./components/HudOverlay";
 import { AchievementToast } from "./components/AchievementToast";
 import { triggerAchievement } from "./utils/achievementManager";
 import { AchievementUnlockToastData } from "./types";
 import { cleanHeroName, normalizeHeroName } from "./utils/gameProtagonists";
+import { TopStudioLogoBanner } from "./components/TopStudioLogoBanner";
 import {
   safeSetLocalStorage,
   safeGetLocalStorage,
@@ -62,6 +64,7 @@ import { AuthModal } from "./components/AuthModal";
 import { AccountSettingsModal } from "./components/AccountSettingsModal";
 import { UserDashboardHeader } from "./components/UserDashboardHeader";
 import { fetchUserSeriesList, saveUserSeries, deleteUserSeries } from "./utils/seriesCloudService";
+import { findSynopsisInDb } from "./utils/gameSynopsisDb";
 
 function PlaythroughStudioApp() {
   const { currentUser, userProfile, loading } = useAuth();
@@ -89,28 +92,91 @@ function PlaythroughStudioApp() {
 
   const [seriesList, setSeriesList] = useState<PlaythroughSeries[]>(() => {
     const saved = safeGetLocalStorage<PlaythroughSeries[]>("youtube_playthrough_series", []);
-    if (!saved || saved.length === 0) {
-      return defaultPlaythroughSeries;
+    let baseList = Array.isArray(saved) && saved.length > 0 ? saved : defaultPlaythroughSeries;
+    if (Array.isArray(saved) && saved.length > 0) {
+      // Intelligent merge: ensure all curated default series (like Bloodborne) are available
+      const existingIds = new Set(saved.filter(Boolean).map((s) => s.id));
+      const missingDefaults = defaultPlaythroughSeries.filter((ds) => !existingIds.has(ds.id));
+      if (missingDefaults.length > 0) {
+        baseList = [...saved, ...missingDefaults];
+      }
     }
-    return saved;
+
+    // Auto-fill any missing synopses and ensure missableAlerts from curated series are merged
+    const enrichedList = (baseList || []).filter(Boolean).map((s) => {
+      const defaultMatch = defaultPlaythroughSeries.find((ds) => ds.id === s.id);
+      let mergedEpisodes = Array.isArray(s.episodes) ? s.episodes : [];
+      if (defaultMatch && Array.isArray(defaultMatch.episodes) && Array.isArray(s.episodes)) {
+        mergedEpisodes = s.episodes.map((ep) => {
+          if (!ep) return ep;
+          const defEp = (defaultMatch.episodes || []).find(
+            (de) => de && (de.id === ep.id || de.partNumber === ep.partNumber)
+          );
+          if (
+            defEp &&
+            (!ep.missableAlerts || ep.missableAlerts.length === 0) &&
+            defEp.missableAlerts &&
+            defEp.missableAlerts.length > 0
+          ) {
+            return {
+              ...ep,
+              missableAlerts: defEp.missableAlerts,
+            };
+          }
+          return ep;
+        });
+      }
+
+      let updatedSeries = {
+        ...s,
+        episodes: mergedEpisodes,
+      };
+
+      if (!updatedSeries.gameSynopsis) {
+        const dbMatch = findSynopsisInDb(updatedSeries.gameTitle);
+        if (dbMatch) {
+          updatedSeries = {
+            ...updatedSeries,
+            gameSynopsis: dbMatch.synopsis,
+            gameSynopsisSource: dbMatch.sourceFile ? `DB Library (${dbMatch.sourceFile})` : "Official DB Library",
+            synopsis: dbMatch.synopsis,
+            synopsisSource: dbMatch.sourceFile ? `DB Library (${dbMatch.sourceFile})` : "Official DB Library",
+          };
+        }
+      }
+      return updatedSeries;
+    });
+
+    safeSetLocalStorage("youtube_playthrough_series", enrichedList);
+    return enrichedList;
   });
 
   // Load cloud series for logged in user
   useEffect(() => {
     if (!currentUser) return;
 
-    fetchUserSeriesList(currentUser.uid).then((cloudSeries) => {
-      if (cloudSeries && cloudSeries.length > 0) {
-        setSeriesList(cloudSeries);
-        if (!cloudSeries.some((s) => s.id === activeSeriesId)) {
-          setActiveSeriesId(cloudSeries[0].id);
+    fetchUserSeriesList(currentUser.uid)
+      .then((cloudSeries) => {
+        if (Array.isArray(cloudSeries) && cloudSeries.length > 0) {
+          // Merge missing defaults with cloud series as well
+          const existingIds = new Set(cloudSeries.filter(Boolean).map((s) => s.id));
+          const missingDefaults = defaultPlaythroughSeries.filter((ds) => !existingIds.has(ds.id));
+          const fullList = missingDefaults.length > 0 ? [...cloudSeries, ...missingDefaults] : cloudSeries;
+          setSeriesList(fullList);
+          if (!fullList.some((s) => s?.id === activeSeriesId)) {
+            setActiveSeriesId(fullList[0].id);
+          }
         }
-      }
-    });
+      })
+      .catch((err) => {
+        console.warn("Failed to load cloud series, using local cache:", err);
+      });
   }, [currentUser]);
 
   const [activeSeriesId, setActiveSeriesId] = useState<string>(() => {
-    return safeGetLocalStorage<string>("youtube_active_series_id", "mafia-definitive-edition");
+    const savedId = safeGetLocalStorage<string>("youtube_active_series_id", "");
+    if (savedId) return savedId;
+    return "bloodborne";
   });
 
   const [currentView, setCurrentView] = useState<"landing" | "playthrough">("landing");
@@ -120,7 +186,7 @@ function PlaythroughStudioApp() {
     safeSetLocalStorage("youtube_active_series_id", id);
   };
 
-  const activeSeries = seriesList.find((s) => s.id === activeSeriesId) || seriesList[0];
+  const activeSeries = (seriesList || []).find((s) => s?.id === activeSeriesId) || seriesList?.[0] || defaultPlaythroughSeries[0];
 
   const [targetLength, setTargetLength] = useState<number>(() => userProfile?.defaultEpisodeDuration || 90);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
@@ -153,6 +219,7 @@ function PlaythroughStudioApp() {
   const [showYouTubeStudioModal, setShowYouTubeStudioModal] = useState<boolean>(false);
   const [showBossEncounterPlanner, setShowBossEncounterPlanner] = useState<boolean>(false);
   const [showCompletionDashboard, setShowCompletionDashboard] = useState<boolean>(false);
+  const [showMissablesLockoutsModal, setShowMissablesLockoutsModal] = useState<boolean>(false);
 
   const [thumbnailEpisodeId, setThumbnailEpisodeId] = useState<number | undefined>(undefined);
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -216,7 +283,7 @@ function PlaythroughStudioApp() {
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: series.episodes.map((ep) =>
+              episodes: (series.episodes || []).map((ep) =>
                 ep.id === id ? { ...ep, status } : ep
               ),
             }
@@ -232,14 +299,14 @@ function PlaythroughStudioApp() {
 
         const seriesWideAvatars: Record<string, string> = {};
 
-        for (const ep of series.episodes) {
+        for (const ep of series.episodes || []) {
           const epAvatars = ep.id === updated.id ? (updated.heroAvatars || {}) : (ep.heroAvatars || {});
           Object.assign(seriesWideAvatars, epAvatars);
         }
 
         if (updated.heroAvatars) {
           const updatedNormKeys = new Set(Object.keys(updated.heroAvatars).map((k) => normalizeHeroName(k)));
-          const currentEp = series.episodes.find((e) => e.id === updated.id);
+          const currentEp = (series.episodes || []).find((e) => e?.id === updated.id);
           if (currentEp && currentEp.heroAvatars) {
             for (const oldKey of Object.keys(currentEp.heroAvatars)) {
               const normOldKey = normalizeHeroName(oldKey);
@@ -264,7 +331,7 @@ function PlaythroughStudioApp() {
 
         return {
           ...series,
-          episodes: series.episodes.map((ep) => {
+          episodes: (series.episodes || []).map((ep) => {
             const baseEp = ep.id === updated.id ? updated : ep;
             return {
               ...baseEp,
@@ -282,7 +349,7 @@ function PlaythroughStudioApp() {
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: series.episodes.map((ep) =>
+              episodes: (series.episodes || []).map((ep) =>
                 ep.id === episodeId
                   ? { ...ep, thumbnailCustomImage: thumbnailUrl }
                   : ep
@@ -303,7 +370,7 @@ function PlaythroughStudioApp() {
         if (series.id !== activeSeries.id) return series;
         return {
           ...series,
-          episodes: series.episodes.map((ep) => {
+          episodes: (series.episodes || []).map((ep) => {
             if (thumbnailsMap[ep.id]) {
               return { ...ep, thumbnailCustomImage: thumbnailsMap[ep.id] };
             }
@@ -320,7 +387,7 @@ function PlaythroughStudioApp() {
         if (series.id !== activeSeries.id) return series;
         return {
           ...series,
-          episodes: series.episodes.map((ep) => {
+          episodes: (series.episodes || []).map((ep) => {
             if (promptsMap[ep.id]) {
               return { ...ep, suggestedThumbnailPrompt: promptsMap[ep.id] };
             }
@@ -360,7 +427,31 @@ function PlaythroughStudioApp() {
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: [...series.episodes, newEpisode],
+              episodes: [...(series.episodes || []), newEpisode],
+            }
+          : series
+      )
+    );
+  };
+
+  const handleDuplicateEpisode = (episode: Episode) => {
+    const currentEps = activeSeries.episodes || [];
+    const maxPart = currentEps.reduce((max, ep) => Math.max(max, ep.partNumber), 0);
+    const newEpisode: Episode = {
+      ...episode,
+      id: Date.now(),
+      partNumber: maxPart + 1,
+      title: `${episode.title} (Copy)`,
+      shortTitle: `${episode.shortTitle || episode.title} (Copy)`,
+      status: "not_started",
+      videoStats: undefined,
+    };
+    setSeriesList((prevSeries) =>
+      prevSeries.map((series) =>
+        series.id === activeSeries.id
+          ? {
+              ...series,
+              episodes: [...(series.episodes || []), newEpisode],
             }
           : series
       )
@@ -373,7 +464,7 @@ function PlaythroughStudioApp() {
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: series.episodes.filter((ep) => ep.id !== id),
+              episodes: (series.episodes || []).filter((ep) => ep.id !== id),
             }
           : series
       )
@@ -389,6 +480,7 @@ function PlaythroughStudioApp() {
         s.id === seriesId
           ? {
               ...s,
+              gameTitleLogo: logoUrl,
               gameLogoUrl: logoUrl,
               useTitleLogo: useTitleLogo,
             }
@@ -398,17 +490,30 @@ function PlaythroughStudioApp() {
   };
 
   const handleUpdateSeriesSynopsis = (seriesId: string, synopsis: string, source?: string) => {
-    setSeriesList((prevSeries) =>
-      prevSeries.map((s) =>
+    setSeriesList((prevSeries) => {
+      const updated = prevSeries.map((s) =>
         s.id === seriesId
           ? {
               ...s,
+              gameSynopsis: synopsis,
+              gameSynopsisSource: source || s.gameSynopsisSource || "Official DB Library",
               synopsis: synopsis,
-              synopsisSource: source || s.synopsisSource,
+              synopsisSource: source || s.synopsisSource || "Official DB Library",
             }
           : s
-      )
-    );
+      );
+      safeSetLocalStorage("youtube_playthrough_series", updated);
+      
+      if (currentUser) {
+        const updatedSeries = updated.find((s) => s.id === seriesId);
+        if (updatedSeries) {
+          saveUserSeries(currentUser.uid, updatedSeries).catch((err) =>
+            console.warn("Failed to sync updated synopsis to cloud:", err)
+          );
+        }
+      }
+      return updated;
+    });
   };
 
   const handleOpenThumbnailStudio = (episodeId?: number) => {
@@ -462,7 +567,7 @@ function PlaythroughStudioApp() {
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: series.episodes.map((ep) =>
+              episodes: (series.episodes || []).map((ep) =>
                 ep.id === epId ? { ...ep, chapters } : ep
               ),
             }
@@ -490,7 +595,7 @@ function PlaythroughStudioApp() {
         series.id === activeSeries.id
           ? {
               ...series,
-              episodes: series.episodes.map((ep) =>
+              episodes: (series.episodes || []).map((ep) =>
                 ep.id === epId ? { ...ep, thumbnailConfig: config } : ep
               ),
             }
@@ -529,6 +634,9 @@ function PlaythroughStudioApp() {
     <div
       className={`theme-transition min-h-screen ${themeConfig.classes.rootBg} ${themeConfig.classes.textPrimary} font-sans selection:bg-blue-500/30 selection:text-blue-200 antialiased`}
     >
+      {/* Studio Logo Banner at the very top of the page on its own row above everything else */}
+      <TopStudioLogoBanner />
+
       {/* Top User Multi-Account Bar */}
       <UserDashboardHeader
         seriesList={seriesList}
@@ -585,8 +693,10 @@ function PlaythroughStudioApp() {
         onOpenYouTubeStudio={() => setShowYouTubeStudioModal(true)}
         onOpenBossEncounterPlanner={() => setShowBossEncounterPlanner(true)}
         onOpenCompletionDashboard={() => setShowCompletionDashboard(true)}
+        onOpenMissablesLockoutsModal={() => setShowMissablesLockoutsModal(true)}
         onOpenGameLogoModal={() => setShowGameTitleLogoModal(true)}
         onUpdateSeriesLogo={handleUpdateSeriesLogo}
+        onOpenAccountSettings={() => setShowAccountSettingsModal(true)}
       />
 
       {/* Main View: Landing Studio Hub or Active Episode Directory */}
@@ -621,8 +731,17 @@ function PlaythroughStudioApp() {
             targetLength={targetLength}
             onSelectEpisode={(ep) => setSelectedEpisode(ep)}
             onUpdateStatus={handleUpdateStatus}
+            onDuplicateEpisode={handleDuplicateEpisode}
+            onDeleteEpisode={handleDeleteEpisode}
             onOpenThumbnailStudio={handleOpenThumbnailStudio}
             onOpenRecordingTimer={handleOpenRecordingTimer}
+            onOpenYouTubeStudio={(episodeId) => {
+              if (episodeId) {
+                const ep = episodes.find((e) => e.id === episodeId);
+                if (ep) setSelectedEpisode(ep);
+              }
+              setShowYouTubeStudioModal(true);
+            }}
             onOpenAddEpisodeModal={() => setShowAddEpisodeModal(true)}
             onOpenBossLootCatalog={() => setShowBossLootCatalog(true)}
             onOpenProtagonistDB={() => setShowProtagonistDB(true)}
@@ -651,6 +770,7 @@ function PlaythroughStudioApp() {
       {selectedEpisode && (
         <EpisodeDetailModal
           episode={selectedEpisode}
+          activeSeries={activeSeries}
           seriesTitle={activeSeries?.gameTitle || "Game Series"}
           seriesId={activeSeries?.id || "default"}
           onClose={() => setSelectedEpisode(null)}
@@ -660,6 +780,7 @@ function PlaythroughStudioApp() {
           onOpenRecordingTimer={() => handleOpenRecordingTimer(selectedEpisode)}
           allEpisodes={episodes}
           onApplyBrandingToAll={handleApplyBrandingToAll}
+          onOpenMissablesHub={() => setShowMissablesLockoutsModal(true)}
         />
       )}
 
@@ -682,7 +803,7 @@ function PlaythroughStudioApp() {
           onClose={() => setShowThumbnailStudio(false)}
           seriesTitle={activeSeries?.gameTitle || "Game Series"}
           seriesCoverImage={activeSeries?.coverImage}
-          seriesLogoUrl={activeSeries?.gameLogoUrl}
+          seriesLogoUrl={activeSeries?.gameTitleLogo || activeSeries?.gameLogoUrl}
           episodes={episodes}
           initialEpisodeId={thumbnailEpisodeId}
           onApplyThumbnail={handleApplyThumbnail}
@@ -758,6 +879,8 @@ function PlaythroughStudioApp() {
         <GameTitleLogoModal
           isOpen={showGameTitleLogoModal}
           onClose={() => setShowGameTitleLogoModal(false)}
+          seriesList={seriesList}
+          activeSeriesId={activeSeriesId}
           series={activeSeries}
           onUpdateSeriesLogo={handleUpdateSeriesLogo}
         />
@@ -913,6 +1036,20 @@ function PlaythroughStudioApp() {
           seriesId={activeSeries?.id || "default"}
           episodes={episodes}
           quests={activeQuests}
+        />
+      )}
+
+      {showMissablesLockoutsModal && (
+        <MissableItemsLockoutsModal
+          isOpen={showMissablesLockoutsModal}
+          onClose={() => setShowMissablesLockoutsModal(false)}
+          activeSeries={activeSeries}
+          series={activeSeries}
+          episodes={episodes}
+          onUpdateEpisode={handleUpdateEpisode}
+          onUpdateEpisodes={handleBatchUpdateEpisodes}
+          onBatchUpdateEpisodes={handleBatchUpdateEpisodes}
+          onOpenEpisodeDetail={(ep) => setSelectedEpisode(ep)}
         />
       )}
 

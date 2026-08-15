@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Episode, PlaythroughSeries } from "../types";
+import React, { useState, useEffect } from "react";
+import { Episode, MissableAlert, PlaythroughSeries } from "../types";
 import { safeFetchJson } from "../utils/apiUtils";
 import { ThumbnailBuilder } from "./ThumbnailBuilder";
 import { getGameCharacterList, getCharacterBadgeIcon, cleanHeroName, normalizeHeroName, getCharacterEmojiIcon, getHeroAvatarUrl, resizeHeroAvatarImage, saveGlobalHeroAvatar, removeGlobalHeroAvatar } from "../utils/gameProtagonists";
@@ -28,21 +28,43 @@ import {
   Camera,
   Trash2,
   User,
-  Upload
+  Upload,
+  AlertTriangle,
+  Save,
+  Flag,
+  Circle,
+  Link,
+  ChevronRight
 } from "lucide-react";
 
 interface EpisodeDetailModalProps {
   episode: Episode;
   activeSeries?: PlaythroughSeries;
+  seriesTitle?: string;
+  seriesId?: string;
   onClose: () => void;
   onUpdateEpisode: (updated: Episode) => void;
+  onDeleteEpisode?: (id: string) => void;
+  onOpenThumbnailStudio?: (episodeId?: string) => void;
+  onOpenRecordingTimer?: (episode?: Episode) => void;
+  allEpisodes?: Episode[];
+  onApplyBrandingToAll?: (branding: any) => void;
+  onOpenMissablesHub?: () => void;
 }
 
 export const EpisodeDetailModal: React.FC<EpisodeDetailModalProps> = ({
   episode,
   activeSeries,
+  seriesTitle,
+  seriesId,
   onClose,
   onUpdateEpisode,
+  onDeleteEpisode,
+  onOpenThumbnailStudio,
+  onOpenRecordingTimer,
+  allEpisodes,
+  onApplyBrandingToAll,
+  onOpenMissablesHub,
 }) => {
   const [activeTab, setActiveTab] = useState<"package" | "gameplay" | "ai" | "thumbnail">("package");
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -51,6 +73,17 @@ export const EpisodeDetailModal: React.FC<EpisodeDetailModalProps> = ({
   // Editable states
   const [editedTitle, setEditedTitle] = useState(episode.title);
   const [editedDescription, setEditedDescription] = useState(episode.description);
+  const [editedStartPoint, setEditedStartPoint] = useState(episode.startPoint || "");
+  const [editedEndPoint, setEditedEndPoint] = useState(episode.endPoint || "");
+  const [savedMilestoneFeedback, setSavedMilestoneFeedback] = useState(false);
+
+  // Sync internal states when selected episode changes
+  useEffect(() => {
+    setEditedTitle(episode.title || "");
+    setEditedDescription(episode.description || "");
+    setEditedStartPoint(episode.startPoint || "");
+    setEditedEndPoint(episode.endPoint || "");
+  }, [episode.id, episode.startPoint, episode.endPoint, episode.title, episode.description]);
 
   // AI enhancement states
   const [loadingAi, setLoadingAi] = useState(false);
@@ -148,11 +181,11 @@ DESCRIPTION:
 ${editedDescription}
 
 CHAPTER TIMESTAMPS:
-${episode.chapters.map((c) => `${c.timestamp} - ${c.title}`).join("\n")}
+${(episode.chapters || []).map((c) => `${c.timestamp} - ${c.title}`).join("\n")}
 
 TAGS:
-${episode.tags.join(", ")}
-${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
+${(episode.tags || []).join(", ")}
+${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
 
     handleCopy(fullText, "full_package");
   };
@@ -333,7 +366,7 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
         </div>
 
         {/* Tab Navigation Bar */}
-        <div className="flex border-b border-white/10 bg-[#09090b] px-4 gap-2 overflow-x-auto">
+        <div className="flex border-b border-white/10 bg-[#09090b] px-4 sm:px-6 gap-2 overflow-x-auto overflow-y-visible py-2 min-h-[52px] scrollbar-thin">
           {[
             { id: "package", label: "YouTube Package", icon: Youtube },
             { id: "gameplay", label: "Story & Pacing", icon: MapPin },
@@ -345,14 +378,14 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
-                    ? "border-amber-400 text-amber-300 bg-amber-500/10 font-bold"
-                    : "border-transparent text-zinc-400 hover:text-zinc-200"
+                    ? "border-amber-400/80 text-amber-300 bg-amber-500/15 shadow-sm"
+                    : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="leading-normal">{tab.label}</span>
               </button>
             );
           })}
@@ -396,27 +429,30 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
               </div>
 
               {/* Alternative Titles (CTR Options) */}
-              <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Alternative Viral Title Options (CTR Focused)
-                </span>
-                <div className="space-y-2">
-                  {episode.altTitles.map((alt, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 text-xs text-slate-200"
-                    >
-                      <span className="font-medium">{alt}</span>
-                      <button
-                        onClick={() => handleCopy(alt, `alt_${idx}`)}
-                        className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[11px] font-semibold shrink-0"
+              {/* Alternative Titles */}
+              {episode.altTitles && episode.altTitles.length > 0 && (
+                <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Alternative Viral Title Options (CTR Focused)
+                  </span>
+                  <div className="space-y-2">
+                    {episode.altTitles.map((alt, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 text-xs text-slate-200"
                       >
-                        {copiedField === `alt_${idx}` ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  ))}
+                        <span className="font-medium">{alt}</span>
+                        <button
+                          onClick={() => handleCopy(alt, `alt_${idx}`)}
+                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[11px] font-semibold shrink-0"
+                        >
+                          {copiedField === `alt_${idx}` ? "Copied!" : "Copy"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Description Box */}
               <div>
@@ -447,12 +483,12 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-blue-400" /> Exact Chapter Timestamps ({episode.chapters.length})
+                    <Clock className="w-4 h-4 text-blue-400" /> Exact Chapter Timestamps ({(episode.chapters || []).length})
                   </label>
                   <button
                     onClick={() =>
                       handleCopy(
-                        episode.chapters.map((c) => `${c.timestamp} - ${c.title}`).join("\n"),
+                        (episode.chapters || []).map((c) => `${c.timestamp} - ${c.title}`).join("\n"),
                         "chapters"
                       )
                     }
@@ -463,7 +499,7 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                   </button>
                 </div>
                 <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5 font-mono text-xs">
-                  {episode.chapters.map((chap, idx) => (
+                  {(episode.chapters || []).map((chap, idx) => (
                     <div key={idx} className="flex items-center gap-3 text-slate-300">
                       <span className="text-amber-400 font-bold w-16">{chap.timestamp}</span>
                       <span className="text-slate-400">-</span>
@@ -480,7 +516,7 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                     <Tag className="w-4 h-4 text-emerald-400" /> Video Tags & Hashtags
                   </label>
                   <button
-                    onClick={() => handleCopy(episode.tags.join(", "), "tags")}
+                    onClick={() => handleCopy((episode.tags || []).join(", "), "tags")}
                     className="text-xs text-slate-400 hover:text-amber-300 flex items-center gap-1"
                   >
                     {copiedField === "tags" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -488,7 +524,7 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  {episode.tags.map((tag, idx) => (
+                  {(episode.tags || []).map((tag, idx) => (
                     <span
                       key={idx}
                       className="px-2.5 py-1 bg-slate-900 text-slate-300 text-xs font-medium rounded-md border border-slate-800"
@@ -505,6 +541,7 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
           {activeTab === "gameplay" && (() => {
             const availableRoster = getGameCharacterList(currentGameTitle, episode);
             const currentParty = episode.partyMembers || [];
+            const prevEpisode = activeSeries?.episodes?.find((ep) => ep.partNumber === episode.partNumber - 1);
 
             return (
               <div className="space-y-6">
@@ -724,39 +761,387 @@ ${episode.tags.map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                   </div>
                 </div>
 
-                {/* Start & End Milestones */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" /> Start Milestone
-                  </span>
-                  <p className="text-sm font-semibold text-slate-100 mt-1">{episode.startPoint}</p>
-                </div>
-
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <span className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" /> End Milestone
-                  </span>
-                  <p className="text-sm font-semibold text-slate-100 mt-1">{episode.endPoint}</p>
-                </div>
-              </div>
-
-              {/* Key Events Sequence */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                  <List className="w-4 h-4 text-amber-400" /> Story Progression & Key Beats
-                </h4>
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2.5">
-                  {episode.keyEvents.map((event, idx) => (
-                    <div key={idx} className="flex items-start gap-3 text-xs text-slate-200">
-                      <span className="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 text-amber-400 font-mono font-bold flex items-center justify-center shrink-0">
-                        {idx + 1}
-                      </span>
-                      <p className="mt-1 leading-relaxed">{event}</p>
+                {/* Start & End Milestones (Editable & Saveable) */}
+                <div className="bg-[#0b0e17] p-4 sm:p-5 rounded-xl border border-blue-500/30 space-y-3 shadow-md">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-emerald-400" /> Start & End Story Milestones
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        Define exact in-game progress checkpoints for Episode #{episode.partNumber}
+                      </p>
                     </div>
-                  ))}
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {prevEpisode?.endPoint && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newStart = prevEpisode.endPoint;
+                            setEditedStartPoint(newStart);
+                            onUpdateEpisode({
+                              ...episode,
+                              startPoint: newStart,
+                            });
+                            setSavedMilestoneFeedback(true);
+                            setTimeout(() => setSavedMilestoneFeedback(false), 3000);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                          title={`Auto-chain: set Start Milestone = EP ${prevEpisode.partNumber} End Milestone`}
+                        >
+                          <Link className="w-3.5 h-3.5" />
+                          <span>Chain from EP {prevEpisode.partNumber} End</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onUpdateEpisode({
+                            ...episode,
+                            startPoint: editedStartPoint.trim(),
+                            endPoint: editedEndPoint.trim(),
+                          });
+                          setSavedMilestoneFeedback(true);
+                          setTimeout(() => setSavedMilestoneFeedback(false), 3000);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer ${
+                          savedMilestoneFeedback
+                            ? "bg-emerald-600 text-white shadow-emerald-900/50"
+                            : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                        }`}
+                      >
+                        {savedMilestoneFeedback ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                        <span>{savedMilestoneFeedback ? "Milestones Saved!" : "Save Milestones"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Start Milestone Input */}
+                    <div className="bg-[#121624] p-3.5 rounded-xl border border-emerald-500/30 space-y-1.5 focus-within:border-emerald-400 transition-all shadow-inner">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-400" /> Start Milestone (Checkpoint)
+                        </label>
+                        <span className="text-[10px] text-emerald-300/80 font-mono font-semibold">
+                          Episode Intro
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={editedStartPoint}
+                        onChange={(e) => {
+                          setEditedStartPoint(e.target.value);
+                          onUpdateEpisode({ ...episode, startPoint: e.target.value });
+                        }}
+                        placeholder="e.g. Arriving at Returners' Hideout / Central Yharnam Clinic..."
+                        className="w-full bg-black/50 border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-400 transition-colors"
+                      />
+                      <p className="text-[10.5px] text-slate-400 leading-tight">
+                        Opening zone, dialogue conference, or prior save checkpoint.
+                      </p>
+                    </div>
+
+                    {/* End Milestone Input */}
+                    <div className="bg-[#121624] p-3.5 rounded-xl border border-rose-500/30 space-y-1.5 focus-within:border-rose-400 transition-all shadow-inner">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Flag className="w-3.5 h-3.5 text-rose-400" /> End Milestone (Cliffhanger)
+                        </label>
+                        <span className="text-[10px] text-rose-300/80 font-mono font-semibold">
+                          Episode Outro
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={editedEndPoint}
+                        onChange={(e) => {
+                          setEditedEndPoint(e.target.value);
+                          onUpdateEpisode({ ...episode, endPoint: e.target.value });
+                        }}
+                        placeholder="e.g. Sabin & Cyan Boarding Phantom Train / Gascoigne Slain..."
+                        className="w-full bg-black/50 border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-rose-400 transition-colors"
+                      />
+                      <p className="text-[10.5px] text-slate-400 leading-tight">
+                        Ending boss defeat, zone boundary, or cliffhanger transition.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+
+                {/* Key Events Sequence */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                    <List className="w-4 h-4 text-amber-400" /> Story Progression & Key Beats
+                  </h4>
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2.5">
+                    {(episode.keyEvents || []).map((event, idx) => (
+                      <div key={idx} className="flex items-start gap-3 text-xs text-slate-200">
+                        <span className="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 text-amber-400 font-mono font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <p className="mt-1 leading-relaxed break-words min-w-0">{event}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CRITICAL MISSABLE ITEMS & STORY PACING LOCKOUT ALERTS */}
+                <div>
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                        <ShieldAlert className="w-4 h-4 text-rose-400" /> Critical Missable Items & Story Lockouts
+                      </h4>
+                      <span className="text-[11px] font-bold text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-500/40">
+                        {episode.missableAlerts?.length || 0} Alert{episode.missableAlerts?.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+
+                    {onOpenMissablesHub && (
+                      <button
+                        type="button"
+                        onClick={onOpenMissablesHub}
+                        className="text-xs font-bold text-rose-300 hover:text-white bg-rose-950/80 hover:bg-rose-900 px-2.5 py-1 rounded-lg border border-rose-500/40 flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <span>Open Playthrough Lockout Hub</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bg-gradient-to-br from-rose-950/40 via-slate-950 to-slate-950 p-4 sm:p-5 rounded-xl border border-rose-500/40 space-y-3.5 shadow-lg">
+                    {/* Point of no return warning banner */}
+                    <div className="p-3 bg-rose-950/80 border border-rose-500/60 rounded-lg flex items-start gap-2.5 text-xs text-rose-100">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-black text-amber-300 uppercase tracking-wide block">
+                          Point of No Return & 100% Missable Warning:
+                        </span>
+                        <p className="mt-0.5 leading-relaxed text-rose-200/90 text-[11.5px]">
+                          If the items, tools, gestures, runes, or NPC triggers below are not obtained <strong>then and there</strong> in Episode #{episode.partNumber}, they become <strong>permanently locked out</strong> and will NOT be available later in the game! Secure them before advancing past the lockout triggers.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Missable items cards */}
+                    {episode.missableAlerts && episode.missableAlerts.length > 0 ? (
+                      <div className="space-y-3">
+                        {episode.missableAlerts.map((alert, idx) => (
+                          <div
+                            key={idx}
+                            className={`rounded-xl border p-3.5 space-y-2.5 text-xs transition-all shadow-sm ${
+                              alert.isSecured
+                                ? "bg-emerald-950/20 border-emerald-500/40"
+                                : "bg-black/60 border-rose-500/30 hover:border-rose-500/60"
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {/* Checkoff Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedAlerts = [...(episode.missableAlerts || [])];
+                                    updatedAlerts[idx] = {
+                                      ...updatedAlerts[idx],
+                                      isSecured: !updatedAlerts[idx].isSecured,
+                                    };
+                                    onUpdateEpisode({ ...episode, missableAlerts: updatedAlerts });
+                                  }}
+                                  className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                                    alert.isSecured
+                                      ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                                      : "bg-slate-900 border border-slate-700 text-slate-400 hover:border-rose-400 hover:text-rose-400"
+                                  }`}
+                                  title={alert.isSecured ? "Mark as Pending" : "Mark as Secured / Collected"}
+                                >
+                                  {alert.isSecured ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Circle className="w-3 h-3" />}
+                                </button>
+
+                                <span
+                                  className={`font-black text-sm tracking-tight ${
+                                    alert.isSecured ? "text-emerald-200 line-through opacity-80" : "text-white"
+                                  }`}
+                                >
+                                  {alert.itemName}
+                                </span>
+
+                                <span className="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/30">
+                                  {alert.category}
+                                </span>
+
+                                {alert.isSecured && (
+                                  <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                                    ✓ Secured
+                                  </span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedAlerts = (episode.missableAlerts || []).filter((_, i) => i !== idx);
+                                  onUpdateEpisode({ ...episode, missableAlerts: updatedAlerts });
+                                }}
+                                className="text-slate-500 hover:text-red-400 p-1 rounded transition-colors text-[11px] flex items-center gap-1 cursor-pointer"
+                                title="Delete Missable Alert"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Remove</span>
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px]">
+                              <div className="bg-black/30 p-2 rounded-lg border border-white/5 space-y-0.5">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-blue-400" /> Location
+                                </span>
+                                <p className="text-slate-200 font-medium">{alert.location}</p>
+                              </div>
+                              <div className="bg-rose-950/30 p-2 rounded-lg border border-rose-500/20 space-y-0.5">
+                                <span className="text-[10px] uppercase font-bold text-rose-400 block flex items-center gap-1">
+                                  <Flag className="w-3 h-3 text-rose-400" /> Permanent Lockout Trigger
+                                </span>
+                                <p className="text-rose-200 font-semibold">{alert.lockoutTrigger}</p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-0.5 pt-0.5">
+                              <span className="text-[10px] uppercase font-bold text-emerald-400 block">
+                                🗝️ How To Get & Exact Method
+                              </span>
+                              <p className="text-emerald-200/90 leading-relaxed font-medium bg-emerald-950/20 p-2.5 rounded-lg border border-emerald-500/20 text-xs">
+                                {alert.howToGet}
+                              </p>
+                            </div>
+
+                            <div className="text-[11px] text-amber-300/90 font-medium bg-amber-950/30 px-2.5 py-1.5 rounded-lg border border-amber-500/20 flex items-start gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                              <span>{alert.warning}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 italic py-2">
+                        No critical missable alerts currently logged for this episode. Add one below to protect your 100% walkthrough.
+                      </p>
+                    )}
+
+                    {/* Add Missable Item Form */}
+                    <div className="pt-3 border-t border-slate-800">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const form = e.currentTarget;
+                          const nameInput = form.elements.namedItem("missableName") as HTMLInputElement;
+                          const catInput = form.elements.namedItem("missableCat") as HTMLSelectElement;
+                          const locInput = form.elements.namedItem("missableLoc") as HTMLInputElement;
+                          const triggerInput = form.elements.namedItem("missableTrigger") as HTMLInputElement;
+                          const howInput = form.elements.namedItem("missableHow") as HTMLInputElement;
+                          const warnInput = form.elements.namedItem("missableWarn") as HTMLInputElement;
+
+                          if (!nameInput?.value.trim() || !locInput?.value.trim()) return;
+
+                          const newAlert: MissableAlert = {
+                            id: `alert_${Date.now()}`,
+                            episodePart: episode.partNumber,
+                            itemName: nameInput.value.trim(),
+                            category: (catInput?.value || "Key Item") as any,
+                            location: locInput.value.trim(),
+                            lockoutTrigger: triggerInput?.value.trim() || "Advancing to next story chapter",
+                            howToGet: howInput?.value.trim() || "Interact before triggering the next world state",
+                            warning: warnInput?.value.trim() || "Permanently unavailable if missed in this playthrough.",
+                            isSecured: false,
+                          };
+
+                          const currentList = episode.missableAlerts || [];
+                          onUpdateEpisode({
+                            ...episode,
+                            missableAlerts: [...currentList, newAlert],
+                          });
+
+                          form.reset();
+                        }}
+                        className="space-y-2.5"
+                      >
+                        <span className="text-[11px] font-black uppercase tracking-wider text-rose-300 block flex items-center gap-1.5">
+                          <Plus className="w-3.5 h-3.5 text-rose-400" /> Add New Missable Alert for Episode #{episode.partNumber}
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            name="missableName"
+                            placeholder="Item / Quest / Weapon Name..."
+                            className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-rose-400 placeholder:text-slate-600"
+                            required
+                          />
+                          <select
+                            name="missableCat"
+                            className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-rose-400 font-medium"
+                          >
+                            <option value="Key Item">Key Item</option>
+                            <option value="Weapon">Weapon</option>
+                            <option value="Armor">Armor</option>
+                            <option value="Tool">Tool</option>
+                            <option value="Rune">Rune</option>
+                            <option value="Gesture">Gesture</option>
+                            <option value="NPC Quest">NPC Quest</option>
+                            <option value="Secret Area">Secret Area</option>
+                            <option value="Boss / Ending">Boss / Ending</option>
+                            <option value="Collectible">Collectible</option>
+                            <option value="Ability / Magic">Ability / Magic</option>
+                            <option value="Trophy / Achievement">Trophy / Achievement</option>
+                          </select>
+                          <input
+                            type="text"
+                            name="missableLoc"
+                            placeholder="Exact Location found..."
+                            className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-rose-400 placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            name="missableTrigger"
+                            placeholder="Lockout Point of No Return trigger (e.g. Boarding airship)..."
+                            className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-rose-400 placeholder:text-slate-600"
+                            required
+                          />
+                          <input
+                            type="text"
+                            name="missableHow"
+                            placeholder="How to obtain (exact instructions)..."
+                            className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-rose-400 placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            name="missableWarn"
+                            placeholder="Urgent warning note (e.g. Permanently missable if boss defeated)..."
+                            className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-rose-400 placeholder:text-slate-600"
+                          />
+                          <button
+                            type="submit"
+                            className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shrink-0 shadow-sm cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add Alert</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
 
               {/* Key Items & Locations Acquired */}
               <div>
