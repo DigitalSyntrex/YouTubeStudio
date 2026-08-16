@@ -17,7 +17,7 @@ import {
   query,
   where
 } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { auth, db, handleFirestoreError, OperationType } from "../firebase";
 import { DEFAULT_CREATOR_AVATARS } from "../data/defaultAvatars";
 
 export interface UserProfile {
@@ -76,6 +76,53 @@ export const generateUserUid = (username: string): string => {
 const LOCAL_SESSION_KEY = "playthrough_active_user_session";
 const LOCAL_ACCOUNTS_KEY = "playthrough_user_accounts_db";
 
+const PRELOADED_ADMIN_PROFILE: UserProfile = {
+  uid: "user_digitalsyntrex",
+  username: "digitalsyntrex",
+  displayName: "DigitalSyntrex",
+  email: "DigitalPlayGrid@gmail.com",
+  avatarUrl: DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png",
+  theme: "midnight",
+  bio: "DigitalPlayGrid Master Admin & YouTube Walkthrough Strategist",
+  channelName: "DigitalPlayGrid",
+  defaultEpisodeDuration: 90,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const DEFAULT_PRELOADED_ACCOUNTS: Record<string, { password: string; profile: UserProfile }> = {
+  "digitalsyntrex": {
+    password: "BBCakesRenRuti1121!",
+    profile: PRELOADED_ADMIN_PROFILE,
+  },
+  "digitalplaygrid@gmail.com": {
+    password: "BBCakesRenRuti1121!",
+    profile: PRELOADED_ADMIN_PROFILE,
+  },
+  "syntrex": {
+    password: "BBCakesRenRuti1121!",
+    profile: {
+      ...PRELOADED_ADMIN_PROFILE,
+      uid: "user_syntrex",
+      username: "syntrex",
+      displayName: "Syntrex",
+      email: "syntrex@gmail.com",
+      channelName: "Syntrex Studio",
+    },
+  },
+  "syntrex@gmail.com": {
+    password: "BBCakesRenRuti1121!",
+    profile: {
+      ...PRELOADED_ADMIN_PROFILE,
+      uid: "user_syntrex",
+      username: "syntrex",
+      displayName: "Syntrex",
+      email: "syntrex@gmail.com",
+      channelName: "Syntrex Studio",
+    },
+  },
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<StudioUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -85,9 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getLocalAccounts = (): Record<string, { password: string; profile: UserProfile }> => {
     try {
       const raw = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
-      return raw ? JSON.parse(raw) : {};
+      const parsed = raw ? JSON.parse(raw) : {};
+      return { ...DEFAULT_PRELOADED_ACCOUNTS, ...parsed };
     } catch {
-      return {};
+      return { ...DEFAULT_PRELOADED_ACCOUNTS };
     }
   };
 
@@ -111,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return data;
       }
     } catch (err) {
-      console.warn("Firestore fetch error, checking local store", err);
+      handleFirestoreError(err, OperationType.GET, `users/${uid}`);
     }
 
     // Check local fallback
@@ -152,14 +200,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Background refresh from Firestore
             fetchProfile(savedProf.uid);
             setLoading(false);
-            return;
           }
         }
       } catch (err) {
         console.warn("Error reading local session:", err);
       }
 
-      // 2. Check Firebase auth listener
+      // 2. Attach Firebase auth listener & ensure auth session is active
       const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         if (fbUser) {
           const userObj: StudioUser = {
@@ -168,9 +215,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             displayName: fbUser.displayName,
             photoURL: fbUser.photoURL,
           };
-          setCurrentUser(userObj);
+          if (!activeUser) {
+            setCurrentUser(userObj);
+          }
           let prof = await fetchProfile(fbUser.uid);
-          if (!prof) {
+          if (!prof && !activeUser) {
             const initialProf: UserProfile = {
               uid: fbUser.uid,
               username: fbUser.displayName || fbUser.email?.split("@")[0] || "Creator",
@@ -185,13 +234,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
             try {
               await setDoc(doc(db, "users", fbUser.uid), initialProf, { merge: true });
-            } catch (e) {}
+            } catch (e) {
+              handleFirestoreError(e, OperationType.WRITE, `users/${fbUser.uid}`);
+            }
             setUserProfile(initialProf);
             localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(initialProf));
           }
-        } else if (!activeUser) {
-          setCurrentUser(null);
-          setUserProfile(null);
+        } else {
+          // If no Firebase Auth user is present, sign in anonymously for Firestore rules access
+          try {
+            await signInAnonymously(auth);
+          } catch (e) {
+            console.warn("Anonymous sign-in note:", e);
+          }
+          if (!activeUser) {
+            setCurrentUser(null);
+            setUserProfile(null);
+          }
         }
         setLoading(false);
       });
@@ -389,7 +448,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await setDoc(doc(db, "users", uid), updated, { merge: true });
     } catch (err) {
-      console.error("Failed to update user profile in Firestore:", err);
+      handleFirestoreError(err, OperationType.WRITE, `users/${uid}`);
+    }
+
+    // Also persist to current Firebase Auth UID document if different
+    if (auth.currentUser?.uid && auth.currentUser.uid !== uid) {
+      try {
+        await setDoc(doc(db, "users", auth.currentUser.uid), updated, { merge: true });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `users/${auth.currentUser.uid}`);
+      }
     }
   };
 

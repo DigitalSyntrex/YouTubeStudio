@@ -27,7 +27,7 @@ export const StudioTitleBanner: React.FC<StudioTitleBannerProps> = ({
       {/* Customize Banner Button */}
       {onOpenSettings && (
         <button
-          onClick={onOpenSettings}
+          onClick={() => onOpenSettings()}
           className="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-cyan-300 transition-all cursor-pointer opacity-80 hover:opacity-100"
           title="Customize Studio Logo & Banner"
         >

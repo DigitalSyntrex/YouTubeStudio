@@ -2262,7 +2262,7 @@ export const bloodbornePlaythroughSeries: PlaythroughSeries = {
   id: "bloodborne",
   gameTitle: "Bloodborne",
   gameTitleLogo: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none"><text x="12" y="46" font-family="'Cinzel', 'Georgia', serif" font-size="34" font-weight="900" fill="%23f8fafc" letter-spacing="3">BLOODBORNE</text><text x="14" y="66" font-family="sans-serif" font-size="10" font-weight="800" fill="%23e11d48" letter-spacing="4">THE OLD HUNTERS • 100% GUIDE</text></svg>`,
-  useTitleLogo: true,
+  useTitleLogo: false,
   subtitle: "100% All Bosses, DLC & Secret True Ending Walkthrough",
   badgeText: "BLOODBORNE 100%",
   accentColor: "#e11d48",

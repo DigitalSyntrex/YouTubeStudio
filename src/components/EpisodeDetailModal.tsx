@@ -75,6 +75,7 @@ export const EpisodeDetailModal: React.FC<EpisodeDetailModalProps> = ({
   const [editedDescription, setEditedDescription] = useState(episode.description);
   const [editedStartPoint, setEditedStartPoint] = useState(episode.startPoint || "");
   const [editedEndPoint, setEditedEndPoint] = useState(episode.endPoint || "");
+  const [editedDuration, setEditedDuration] = useState<number>(episode.estDurationMinutes || 105);
   const [savedMilestoneFeedback, setSavedMilestoneFeedback] = useState(false);
 
   // Sync internal states when selected episode changes
@@ -83,7 +84,8 @@ export const EpisodeDetailModal: React.FC<EpisodeDetailModalProps> = ({
     setEditedDescription(episode.description || "");
     setEditedStartPoint(episode.startPoint || "");
     setEditedEndPoint(episode.endPoint || "");
-  }, [episode.id, episode.startPoint, episode.endPoint, episode.title, episode.description]);
+    setEditedDuration(episode.estDurationMinutes || 105);
+  }, [episode.id, episode.startPoint, episode.endPoint, episode.title, episode.description, episode.estDurationMinutes]);
 
   // AI enhancement states
   const [loadingAi, setLoadingAi] = useState(false);
@@ -867,6 +869,55 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                       <p className="text-[10.5px] text-slate-400 leading-tight">
                         Ending boss defeat, zone boundary, or cliffhanger transition.
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Estimated / Recorded Duration Control */}
+                  <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-cyan-400" />
+                      <div>
+                        <span className="text-xs font-bold text-slate-200">Episode Target & Recorded Duration:</span>
+                        <span className="ml-2 font-mono font-black text-cyan-300 text-xs">{editedDuration} mins (~{(editedDuration / 60).toFixed(1)}h)</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1">
+                        {[60, 90, 105, 110, 120].map((mins) => (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() => {
+                              setEditedDuration(mins);
+                              onUpdateEpisode({ ...episode, estDurationMinutes: mins });
+                            }}
+                            className={`px-2 py-1 rounded text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                              editedDuration === mins
+                                ? "bg-cyan-500 text-slate-950 shadow-sm"
+                                : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                            }`}
+                          >
+                            {mins}m
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          value={editedDuration}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            setEditedDuration(val);
+                            onUpdateEpisode({ ...episode, estDurationMinutes: val });
+                          }}
+                          className="w-12 bg-transparent text-right font-mono font-bold text-xs text-white focus:outline-none"
+                        />
+                        <span className="text-[10px] text-slate-400 font-bold">mins</span>
+                      </div>
                     </div>
                   </div>
                 </div>

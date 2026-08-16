@@ -97,7 +97,7 @@ export const GameTitleLogoModal: React.FC<GameTitleLogoModalProps> = ({
 
   const [logoUrl, setLogoUrl] = useState<string | undefined>(targetSeries?.gameTitleLogo);
   const [useTitleLogo, setUseTitleLogo] = useState<boolean>(
-    targetSeries?.useTitleLogo ?? Boolean(targetSeries?.gameTitleLogo)
+    targetSeries?.useTitleLogo ?? false
   );
   const [customUrlInput, setCustomUrlInput] = useState<string>("");
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -110,7 +110,7 @@ export const GameTitleLogoModal: React.FC<GameTitleLogoModalProps> = ({
   useEffect(() => {
     if (targetSeries) {
       setLogoUrl(targetSeries.gameTitleLogo);
-      setUseTitleLogo(targetSeries.useTitleLogo ?? Boolean(targetSeries.gameTitleLogo));
+      setUseTitleLogo(targetSeries.useTitleLogo ?? false);
       setCustomUrlInput(targetSeries.gameTitleLogo?.startsWith("http") || targetSeries.gameTitleLogo?.startsWith("/") ? targetSeries.gameTitleLogo : "");
       setUploadError(null);
     }

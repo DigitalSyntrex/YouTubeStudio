@@ -108,10 +108,12 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedRarity, setSelectedRarity] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "unlocked" | "locked">("all");
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setAchievements(loadAchievements());
+      setConfirmReset(false);
     }
   }, [isOpen]);
 
@@ -120,11 +122,15 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
   const stats = calculateGamerscore(achievements);
 
   const handleResetAchievements = () => {
-    if (window.confirm("Are you sure you want to reset all achievement progress?")) {
-      saveAchievements(INITIAL_ACHIEVEMENTS);
-      setAchievements(INITIAL_ACHIEVEMENTS);
-      if (onAchievementUpdate) onAchievementUpdate();
+    if (!confirmReset) {
+      setConfirmReset(true);
+      setTimeout(() => setConfirmReset(false), 4000);
+      return;
     }
+    saveAchievements(INITIAL_ACHIEVEMENTS);
+    setAchievements(INITIAL_ACHIEVEMENTS);
+    setConfirmReset(false);
+    if (onAchievementUpdate) onAchievementUpdate();
   };
 
   const handleTestUnlock = (id: string) => {
@@ -328,10 +334,15 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
 
             <button
               onClick={handleResetAchievements}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 rounded-xl border border-slate-700 transition-colors text-xs flex items-center gap-1 ml-auto sm:ml-0"
-              title="Reset Achievements Progress"
+              className={`p-1.5 rounded-xl border transition-all text-xs flex items-center gap-1.5 ml-auto sm:ml-0 font-bold cursor-pointer ${
+                confirmReset
+                  ? "bg-rose-600 hover:bg-rose-500 text-white border-rose-400 animate-pulse px-2.5"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 border-slate-700"
+              }`}
+              title={confirmReset ? "Click again to confirm reset" : "Reset Achievements Progress"}
             >
               <RotateCcw className="w-3.5 h-3.5" />
+              {confirmReset && <span className="text-[11px]">Confirm Reset?</span>}
             </button>
           </div>
         </div>

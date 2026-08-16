@@ -13,23 +13,31 @@ import {
   ShieldCheck,
   Zap,
   TrendingUp,
-  Award
+  Award,
+  KeyRound,
+  Crown
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useSubscription } from "../context/SubscriptionContext";
+import { useAdmin } from "../context/AdminContext";
 import { PlaythroughSeries } from "../types";
 
 interface UserDashboardHeaderProps {
   seriesList: PlaythroughSeries[];
-  onOpenSettings: () => void;
+  onOpenSettings: (defaultTab?: "overview" | "achievements" | "subscription" | "profile" | "preferences") => void;
   onOpenNewSeries: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
   seriesList,
   onOpenSettings,
   onOpenNewSeries,
+  onOpenAdmin,
 }) => {
   const { userProfile, logout } = useAuth();
+  const { entitlement } = useSubscription();
+  const { isAdmin } = useAdmin();
 
   const totalEpisodes = seriesList.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
   const totalCompleted = seriesList.reduce(
@@ -45,7 +53,7 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
         {/* Left: User Profile badge & Channel info */}
         <div
-          onClick={onOpenSettings}
+          onClick={() => onOpenSettings("overview")}
           className="flex items-center gap-3.5 min-w-0 cursor-pointer group p-1 -m-1 rounded-2xl hover:bg-white/5 transition-all"
           title="Click to customize Creator Avatar & Profile Settings"
         >
@@ -97,11 +105,34 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Account Settings & Log Out */}
+        {/* Right: Admin Portal, Have a key, Account Settings & Log Out */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Admin Control Portal Button (Visible for Syntrex and Master Admins) */}
+          {isAdmin && onOpenAdmin && (
+            <button
+              type="button"
+              onClick={() => onOpenAdmin()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-900/60 via-purple-800/60 to-indigo-900/60 hover:from-purple-800 hover:to-indigo-800 border border-purple-400/50 text-purple-200 hover:text-white text-xs font-black transition-all shadow-md shadow-purple-900/30 cursor-pointer animate-pulse"
+              title="Open Admin Master Control Portal (Key Vault, Generator & Site Controls)"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+              <span>Admin Portal</span>
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={onOpenSettings}
+            onClick={() => onOpenSettings("subscription")}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-600/15 hover:from-amber-500/25 hover:to-amber-600/25 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all shadow-sm cursor-pointer"
+            title="Redeem a 17-digit Product Key (DPGXXXXXXYYXXXXXX)"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+            <span>Have a key?</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenSettings("overview")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#090e1c] hover:bg-blue-950/60 border border-blue-500/30 text-zinc-200 hover:text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
             title="Adjust Account Settings & Dashboard Customization"
           >

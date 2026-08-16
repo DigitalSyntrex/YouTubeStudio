@@ -1199,7 +1199,7 @@ export const ff16PlaythroughSeries: PlaythroughSeries = {
   id: "final-fantasy-xvi",
   gameTitle: "Final Fantasy XVI",
   gameTitleLogo: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" fill="none"><text x="10" y="45" font-family="'Times New Roman', serif" font-size="34" font-weight="900" fill="%23f8fafc" letter-spacing="2">FINAL FANTASY</text><text x="280" y="45" font-family="'Times New Roman', serif" font-size="36" font-weight="900" fill="%23ef4444">XVI</text><text x="12" y="65" font-family="sans-serif" font-size="10" font-weight="800" fill="%23f59e0b" letter-spacing="4">VALISTHEA • 100% GUIDE</text></svg>`,
-  useTitleLogo: true,
+  useTitleLogo: false,
   gameSynopsis: "In the land of Valisthea, mothercrystals provide magical aether while dominant individuals channel the catastrophic powers of Eikons. Clive Rosfield, First Shield of Rosaria, embarks on a dark quest for revenge following a tragic betrayal at Phoenix Gate, ultimately unraveling a sinister god-like entity threatening the realm.",
   gameSynopsisSource: "AI Web Scraped via Google Search Grounding",
   subtitle: "Main Story & Eikon Power 100% Walkthrough",

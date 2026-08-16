@@ -2,23 +2,136 @@
   "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firestore-blueprint.json",
   "entities": {
     "users": {
-      "fields": {
+      "title": "UserProfile",
+      "description": "User profile with role, channel info, and settings",
+      "type": "object",
+      "properties": {
         "id": { "type": "string", "description": "Firebase Auth UID" },
         "username": { "type": "string", "description": "Unique chosen handle / username" },
         "displayName": { "type": "string", "description": "Display name of the user" },
         "email": { "type": "string", "description": "User email address" },
+        "role": { "type": "string", "enum": ["user", "admin", "demo"], "description": "User access level" },
         "avatarUrl": { "type": "string", "description": "User custom avatar picture URL or base64" },
         "theme": { "type": "string", "description": "Preferred UI theme ID" },
+        "channelName": { "type": "string", "description": "YouTube channel name" },
         "createdAt": { "type": "string", "description": "ISO timestamp of user registration" },
-        "updatedAt": { "type": "string", "description": "ISO timestamp of last profile update" },
-        "customSettings": {
-          "type": "object",
-          "description": "User customization preferences such as default episode duration, banner styling, auto-save settings"
-        }
-      }
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last profile update" }
+      },
+      "required": ["id", "username", "email", "createdAt"]
+    },
+    "subscription_plans": {
+      "title": "SubscriptionPlan",
+      "description": "Available subscription plans and tiers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Plan unique identifier (e.g. trial-72h, monthly-30d, annual-1y, lifetime)" },
+        "name": { "type": "string", "description": "Display name of the plan" },
+        "description": { "type": "string", "description": "Plan marketing description" },
+        "tier": { "type": "string", "enum": ["trial", "monthly", "annual", "lifetime"], "description": "Tier categorization" },
+        "priceUsd": { "type": "number", "description": "Price in USD" },
+        "billingInterval": { "type": "string", "enum": ["72_hours", "30_days", "1_year", "lifetime"], "description": "Billing duration" },
+        "durationDays": { "type": "number", "description": "Duration in days (3 for 72h, 30 for monthly, 365 for annual, 36500 for lifetime)" },
+        "isRenewable": { "type": "boolean", "description": "Whether plan auto-renews" },
+        "isOneTime": { "type": "boolean", "description": "Whether this is a one-time non-recurring purchase" },
+        "active": { "type": "boolean", "description": "Whether plan is currently purchasable" },
+        "features": { "type": "array", "description": "List of feature highlights" }
+      },
+      "required": ["id", "name", "tier", "priceUsd", "durationDays", "active"]
+    },
+    "subscriptions": {
+      "title": "UserSubscription",
+      "description": "Active and historical subscriptions for users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Subscription record ID" },
+        "userId": { "type": "string", "description": "Firebase Auth UID of subscriber" },
+        "planId": { "type": "string", "description": "ID of the associated plan" },
+        "tier": { "type": "string", "enum": ["trial", "monthly", "annual", "lifetime"] },
+        "status": { "type": "string", "enum": ["active", "trialing", "expired", "cancelled"], "description": "Current status" },
+        "startDate": { "type": "string", "description": "ISO start timestamp" },
+        "endDate": { "type": "string", "description": "ISO expiration timestamp" },
+        "autoRenew": { "type": "boolean", "description": "Whether automatic renewal is enabled" },
+        "amountPaid": { "type": "number", "description": "Total amount paid in USD" },
+        "paymentMethod": { "type": "string", "description": "Payment gateway/method" },
+        "transactionId": { "type": "string", "description": "Unique transaction/order ID" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["id", "userId", "planId", "tier", "status", "startDate", "endDate"]
+    },
+    "entitlements": {
+      "title": "UserEntitlement",
+      "description": "Computed active entitlements and operational quotas for users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "planTier": { "type": "string", "enum": ["free_demo", "trial", "monthly", "annual", "lifetime"] },
+        "hasActiveSubscription": { "type": "boolean", "description": "Whether user has full write/edit access" },
+        "canCreateSeries": { "type": "boolean", "description": "Permission to create new playthrough series" },
+        "canEditSeries": { "type": "boolean", "description": "Permission to edit, add episodes, and customize playthroughs" },
+        "canExportBatch": { "type": "boolean", "description": "Permission to export CSV/Markdown/JSON batches" },
+        "canGenerateAi": { "type": "boolean", "description": "Permission to use Gemini SEO and image studio" },
+        "canUseObsOverlay": { "type": "boolean", "description": "Permission to use OBS live browser sources" },
+        "canCloudBackup": { "type": "boolean", "description": "Permission to sync and backup to cloud" },
+        "maxSeriesCount": { "type": "number", "description": "Maximum number of allowed playthrough series" },
+        "aiMonthlyQuota": { "type": "number", "description": "Max AI generation requests per month" },
+        "aiUsedThisMonth": { "type": "number", "description": "AI requests consumed in current billing cycle" },
+        "expiresAt": { "type": "string", "description": "ISO expiration timestamp or null for lifetime" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["userId", "planTier", "hasActiveSubscription", "canCreateSeries", "canEditSeries"]
+    },
+    "trial_usage": {
+      "title": "TrialUsage",
+      "description": "Tracking records to prevent trial re-claim abuse",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique record ID (hash of email or user ID)" },
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "Claimant email address" },
+        "claimedAt": { "type": "string", "description": "ISO timestamp when 72h trial was activated" },
+        "expiresAt": { "type": "string", "description": "ISO timestamp when trial expires" },
+        "transactionId": { "type": "string", "description": "Payment receipt ID for $1.99 trial" }
+      },
+      "required": ["id", "userId", "email", "claimedAt", "expiresAt"]
+    },
+    "payments": {
+      "title": "PaymentRecord",
+      "description": "Payment receipts and transaction history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Transaction ID" },
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "planId": { "type": "string", "description": "Purchased Plan ID" },
+        "planName": { "type": "string", "description": "Plan display name" },
+        "amount": { "type": "number", "description": "Total amount in USD" },
+        "currency": { "type": "string", "description": "USD" },
+        "status": { "type": "string", "enum": ["succeeded", "pending", "refunded"] },
+        "provider": { "type": "string", "description": "Payment provider (e.g. Stripe / DigitalPlayGrid Pay)" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["id", "userId", "planId", "amount", "status", "createdAt"]
+    },
+    "audit_logs": {
+      "title": "AuditLog",
+      "description": "Security and access control event trail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Log entry ID" },
+        "userId": { "type": "string", "description": "Actor user ID or 'anonymous'" },
+        "action": { "type": "string", "description": "Action performed (e.g. login, checkout, series_create, access_denied)" },
+        "resource": { "type": "string", "description": "Target resource or API route" },
+        "status": { "type": "string", "enum": ["allowed", "denied", "success", "error"] },
+        "details": { "type": "object", "description": "Extra context metadata" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["id", "action", "status", "timestamp"]
     },
     "userSeries": {
-      "fields": {
+      "title": "UserSeries",
+      "description": "Playthrough series created and owned by a user",
+      "type": "object",
+      "properties": {
         "id": { "type": "string", "description": "Series unique ID" },
         "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
         "gameTitle": { "type": "string", "description": "Game title" },
@@ -30,7 +143,8 @@
         "synopsis": { "type": "string", "description": "Game synopsis" },
         "createdAt": { "type": "string", "description": "ISO creation timestamp" },
         "updatedAt": { "type": "string", "description": "ISO update timestamp" }
-      }
+      },
+      "required": ["id", "userId", "gameTitle", "episodes", "createdAt"]
     }
   }
 }

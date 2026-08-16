@@ -15,6 +15,7 @@ import {
   Layers
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { TopStudioLogoBanner } from "./TopStudioLogoBanner";
 
 interface AuthModalProps {
   initialMode?: "login" | "register";
@@ -98,30 +99,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07090e] flex flex-col items-center justify-between relative overflow-hidden">
+      {/* Top Banner on Auth screen */}
+      <TopStudioLogoBanner />
+
       {/* Ambient background glows */}
       <div className="absolute top-1/4 -left-48 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="w-full max-w-md bg-[#0c101a]/95 border border-blue-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-blue-950/60 backdrop-blur-2xl relative z-10">
-        {/* App Logo & Header */}
-        <div className="text-center space-y-2 mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 ring-4 ring-blue-500/10 mb-2">
-            <Gamepad2 className="w-7 h-7" />
+      <div className="my-auto w-full max-w-md p-4 z-10">
+        <div className="w-full bg-[#0c101a]/95 border border-blue-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-blue-950/60 backdrop-blur-2xl relative">
+          {/* App Logo & Header */}
+          <div className="text-center space-y-2 mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 ring-4 ring-blue-500/10 mb-2">
+              <Gamepad2 className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
+              Playthrough Studio
+              <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-blue-500/20 text-cyan-300 border border-blue-400/30">
+                Cloud
+              </span>
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400">
+              {mode === "login"
+                ? "Sign in to access your personal playthrough dashboard"
+                : "Create an account to start managing your gaming series"}
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-            Playthrough Studio
-            <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-blue-500/20 text-cyan-300 border border-blue-400/30">
-              Cloud
-            </span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400">
-            {mode === "login"
-              ? "Sign in to access your personal playthrough dashboard"
-              : "Create an account to start managing your gaming series"}
-          </p>
-        </div>
 
         {/* Mode Toggle Tabs */}
         <div className="grid grid-cols-2 p-1 bg-[#070a12] border border-white/10 rounded-xl mb-6">
@@ -295,5 +300,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
       </div>
     </div>
+  </div>
   );
 };
+
+

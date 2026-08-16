@@ -9,6 +9,7 @@ import { AchievementModal } from "./AchievementModal";
 import { calculateGamerscore, loadAchievements, triggerAchievement } from "../utils/achievementManager";
 import { SynopsisDbModal } from "./SynopsisDbModal";
 import { useAuth } from "../context/AuthContext";
+import { useAdmin } from "../context/AdminContext";
 
 interface HeaderProps {
   seriesList: PlaythroughSeries[];
@@ -34,8 +35,8 @@ interface HeaderProps {
   onOpenAccountSettings?: () => void;
 
   // View mode navigation
-  currentView?: "landing" | "playthrough";
-  onToggleView?: (view: "landing" | "playthrough") => void;
+  currentView?: "landing" | "playthrough" | "admin";
+  onToggleView?: (view: "landing" | "playthrough" | "admin") => void;
 
   // Theme management props
   currentTheme?: AppThemeId;
@@ -59,6 +60,7 @@ interface HeaderProps {
   onOpenBossEncounterPlanner?: () => void;
   onOpenCompletionDashboard?: () => void;
   onOpenMissablesLockoutsModal?: () => void;
+  onOpenObs?: () => void;
   // Milestone Notifications Props
   milestoneHistory?: MilestoneRecord[];
   onSelectMilestone?: (m: MilestoneRecord) => void;
@@ -112,12 +114,14 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBossEncounterPlanner,
   onOpenCompletionDashboard,
   onOpenMissablesLockoutsModal,
+  onOpenObs,
   onOpenGameLogoModal,
   onUpdateSeriesLogo,
   onUpdateSeriesSynopsis,
   onOpenAccountSettings,
 }) => {
   const { userProfile } = useAuth();
+  const { isAdmin } = useAdmin();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showBackupSyncModal, setShowBackupSyncModal] = useState(false);
   const [showDataExportMenu, setShowDataExportMenu] = useState(false);
@@ -359,8 +363,9 @@ export const Header: React.FC<HeaderProps> = ({
         {/* View Mode & Hub Navigation Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-white/10 pb-2.5">
           {/* Left: Studio Navigation Buttons */}
-          <div className="flex items-center gap-1 bg-[#09090b] p-1 rounded-xl border border-white/10 shrink-0">
+          <div className="flex items-center gap-1 bg-[#09090b] p-1 rounded-xl border border-white/10 shrink-0 flex-wrap">
             <button
+              type="button"
               onClick={() => onToggleView?.("landing")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
                 currentView === "landing"
@@ -372,6 +377,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Studio Landing Hub</span>
             </button>
             <button
+              type="button"
               onClick={() => onToggleView?.("playthrough")}
               className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
                 currentView === "playthrough"
@@ -644,6 +650,18 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Icon Button: OBS Overlays */}
+            {onOpenObs && (
+              <button
+                onClick={onOpenObs}
+                className="p-2 text-purple-300 bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 rounded-xl transition-all shadow-sm hover:scale-105 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                title="OBS Studio Transparent Browser Source HUD Overlays"
+              >
+                <Radio className="w-4 h-4 text-purple-400" />
+                <span className="hidden lg:inline">OBS HUD</span>
+              </button>
+            )}
+
             {/* Icon Button: Print / PDF Cheat Sheet */}
             {onOpenPrintCheatSheet && (
               <button
@@ -740,6 +758,22 @@ export const Header: React.FC<HeaderProps> = ({
                             <div className="min-w-0 flex-1">
                               <div className="text-xs font-extrabold text-zinc-200 group-hover:text-white truncate">Live Session REC Timer</div>
                               <p className="text-[10px] text-zinc-400 truncate">Stopwatch & 1-click timestamps</p>
+                            </div>
+                          </button>
+                        )}
+
+                        {onOpenObs && (
+                          <button
+                            onClick={() => { onOpenObs(); setShowStudioSuiteMenu(false); }}
+                            className="flex items-start gap-2 p-2 text-left bg-zinc-900/60 hover:bg-zinc-800/90 border border-purple-500/40 hover:border-purple-400 rounded-xl transition-all cursor-pointer group"
+                          >
+                            <Radio className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5 animate-pulse" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-extrabold text-zinc-200 group-hover:text-white truncate flex items-center gap-1.5">
+                                <span>OBS Studio HUD Overlays</span>
+                                <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1 py-0.2 rounded font-mono">LIVE</span>
+                              </div>
+                              <p className="text-[10px] text-zinc-400 truncate">Transparent browser source widgets</p>
                             </div>
                           </button>
                         )}

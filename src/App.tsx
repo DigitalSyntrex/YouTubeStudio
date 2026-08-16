@@ -60,18 +60,30 @@ import {
   THEME_CONFIGS,
 } from "./utils/themeUtils";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { SubscriptionProvider, useSubscription } from "./context/SubscriptionContext";
+import { AdminProvider, useAdmin } from "./context/AdminContext";
+import { SubscriptionModal } from "./components/SubscriptionModal";
+import { DemoBanner } from "./components/DemoBanner";
 import { AuthModal } from "./components/AuthModal";
 import { AccountSettingsModal } from "./components/AccountSettingsModal";
+import { AdminDashboardView } from "./components/AdminDashboardView";
+import { AdminControlModal } from "./components/AdminControlModal";
 import { UserDashboardHeader } from "./components/UserDashboardHeader";
 import { fetchUserSeriesList, saveUserSeries, deleteUserSeries } from "./utils/seriesCloudService";
 import { findSynopsisInDb } from "./utils/gameSynopsisDb";
 
 function PlaythroughStudioApp() {
   const { currentUser, userProfile, loading } = useAuth();
+  const { entitlement, requireEntitlement } = useSubscription();
+  const { siteSettings, isAdmin } = useAdmin();
 
   const [currentTheme, setCurrentTheme] = useState<AppThemeId>(() => getSavedTheme());
   const [showThemeSwitcherModal, setShowThemeSwitcherModal] = useState<boolean>(false);
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState<boolean>(false);
+  const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
+  const [accountSettingsTab, setAccountSettingsTab] = useState<
+    "overview" | "achievements" | "subscription" | "profile" | "preferences"
+  >("overview");
 
   // Sync theme with userProfile preference if available
   useEffect(() => {
@@ -127,8 +139,16 @@ function PlaythroughStudioApp() {
         });
       }
 
+      // Check if logo is a default built-in SVG preset or custom user upload
+      const isDefaultPresetSvg = defaultPlaythroughSeries.some(
+        (ds) => ds.gameTitleLogo && ds.gameTitleLogo === s.gameTitleLogo
+      );
+      const isCustomUserLogo = Boolean(s.gameTitleLogo && !isDefaultPresetSvg);
+      const finalUseTitleLogo = isCustomUserLogo ? (s.useTitleLogo ?? true) : (s.useTitleLogo === true && !isDefaultPresetSvg ? true : false);
+
       let updatedSeries = {
         ...s,
+        useTitleLogo: finalUseTitleLogo,
         episodes: mergedEpisodes,
       };
 
@@ -179,7 +199,14 @@ function PlaythroughStudioApp() {
     return "bloodborne";
   });
 
-  const [currentView, setCurrentView] = useState<"landing" | "playthrough">("landing");
+  const [currentView, setCurrentView] = useState<"landing" | "playthrough" | "admin">("landing");
+
+  // Security guard: If non-admin somehow ends up in admin view, revert to landing
+  useEffect(() => {
+    if (currentView === "admin" && !isAdmin) {
+      setCurrentView("landing");
+    }
+  }, [currentView, isAdmin]);
 
   const handleSelectSeries = (id: string) => {
     setActiveSeriesId(id);
@@ -399,6 +426,9 @@ function PlaythroughStudioApp() {
   };
 
   const handleAddSeries = (newSeries: PlaythroughSeries) => {
+    if (!requireEntitlement("canCreateSeries", "Create New Playthrough Series")) {
+      return;
+    }
     setSeriesList((prev) => [newSeries, ...prev]);
     setActiveSeriesId(newSeries.id);
     if (currentUser) {
@@ -407,6 +437,9 @@ function PlaythroughStudioApp() {
   };
 
   const handleDeleteSeries = (id: string) => {
+    if (!requireEntitlement("canEditSeries", "Delete Playthrough Series")) {
+      return;
+    }
     if (seriesList.length <= 1) {
       alert("You must keep at least one playthrough series in your catalog.");
       return;
@@ -422,6 +455,9 @@ function PlaythroughStudioApp() {
   };
 
   const handleAddEpisode = (newEpisode: Episode) => {
+    if (!requireEntitlement("canEditSeries", "Add New Episode")) {
+      return;
+    }
     setSeriesList((prevSeries) =>
       prevSeries.map((series) =>
         series.id === activeSeries.id
@@ -637,11 +673,50 @@ function PlaythroughStudioApp() {
       {/* Studio Logo Banner at the very top of the page on its own row above everything else */}
       <TopStudioLogoBanner />
 
+      {/* Global Admin Announcement Banner (if enabled in Admin Center) */}
+      {siteSettings?.announcementBanner?.enabled && (
+        <div
+          className={`py-2 px-4 text-center text-xs font-bold transition-all border-b shadow-md flex items-center justify-center gap-2 ${
+            siteSettings.announcementBanner.variant === "emerald"
+              ? "bg-emerald-950/90 text-emerald-200 border-emerald-500/40"
+              : siteSettings.announcementBanner.variant === "blue"
+              ? "bg-blue-950/90 text-blue-200 border-blue-500/40"
+              : siteSettings.announcementBanner.variant === "rose"
+              ? "bg-rose-950/90 text-rose-200 border-rose-500/40"
+              : siteSettings.announcementBanner.variant === "purple"
+              ? "bg-purple-950/90 text-purple-200 border-purple-500/40"
+              : "bg-amber-950/90 text-amber-200 border-amber-500/40"
+          }`}
+        >
+          <span>{siteSettings.announcementBanner.text}</span>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowAdminModal(true)}
+              className="ml-2 px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] uppercase font-mono tracking-wider border border-white/20 cursor-pointer"
+            >
+              Edit in Admin
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Demonstration / Subscription Tier Status Banner */}
+      <DemoBanner />
+
       {/* Top User Multi-Account Bar */}
       <UserDashboardHeader
         seriesList={seriesList}
-        onOpenSettings={() => setShowAccountSettingsModal(true)}
+        onOpenSettings={(tab) => {
+          const validTab =
+            typeof tab === "string" && ["overview", "achievements", "subscription", "profile", "preferences"].includes(tab)
+              ? (tab as "overview" | "achievements" | "subscription" | "profile" | "preferences")
+              : "overview";
+          setAccountSettingsTab(validTab);
+          setShowAccountSettingsModal(true);
+        }}
         onOpenNewSeries={() => setShowNewSeriesModal(true)}
+        onOpenAdmin={() => setShowAdminModal(true)}
       />
 
       {/* Header Bar */}
@@ -699,7 +774,7 @@ function PlaythroughStudioApp() {
         onOpenAccountSettings={() => setShowAccountSettingsModal(true)}
       />
 
-      {/* Main View: Landing Studio Hub or Active Episode Directory */}
+      {/* Main View: Landing Studio Hub, Active Episode Directory, or Admin Dashboard */}
       <main className="pb-16">
         {currentView === "landing" ? (
           <LandingPage
@@ -723,6 +798,12 @@ function PlaythroughStudioApp() {
             onUpdateEpisodeStatus={handleUpdateStatus}
             onUpdateQuests={handleUpdateQuests}
             onUpdateSeriesSynopsis={handleUpdateSeriesSynopsis}
+          />
+        ) : currentView === "admin" && isAdmin ? (
+          <AdminDashboardView
+            onNavigateToHub={() => setCurrentView("landing")}
+            onNavigateToPlanner={() => setCurrentView("playthrough")}
+            onOpenNewSeriesModal={() => setShowNewSeriesModal(true)}
           />
         ) : (
           <EpisodeList
@@ -765,6 +846,14 @@ function PlaythroughStudioApp() {
         onOpenPlaythroughView={() => setCurrentView("playthrough")}
         onSelectEpisode={(ep) => setSelectedEpisode(ep)}
         onOpenNewSeriesModal={() => setShowNewSeriesModal(true)}
+        initialTab={accountSettingsTab}
+        onOpenAdminPortal={() => setShowAdminModal(true)}
+      />
+
+      {/* Admin Control Portal Modal */}
+      <AdminControlModal
+        isOpen={showAdminModal}
+        onClose={() => setShowAdminModal(false)}
       />
 
       {/* Modals & Dialogs */}
@@ -1074,6 +1163,9 @@ function PlaythroughStudioApp() {
           onClose={() => setActiveCelebrationMilestone(null)}
         />
       )}
+
+      {/* Global Subscription & Tier Checkout Modal */}
+      <SubscriptionModal />
     </div>
   );
 }
@@ -1081,7 +1173,11 @@ function PlaythroughStudioApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <PlaythroughStudioApp />
+      <SubscriptionProvider>
+        <AdminProvider>
+          <PlaythroughStudioApp />
+        </AdminProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }

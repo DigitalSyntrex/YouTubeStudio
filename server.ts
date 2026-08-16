@@ -4,6 +4,28 @@ import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import {
+  SUBSCRIPTION_PLANS,
+  computeUserEntitlement,
+  processSubscriptionCheckout,
+  cancelUserSubscription,
+  recordAuditLog,
+  getAuditLogs,
+  getUserSeriesList,
+  saveUserSeriesList,
+  incrementAiUsage,
+  redeemProductKey,
+  getProductKeyInfo,
+  getAllProductKeys,
+  adminGenerateKeys,
+  adminResetKey,
+  adminDeleteKey,
+  adminOverrideUserPlan,
+  adminGetStats,
+  getAdminUsersList,
+  addAdminUser,
+  removeAdminUser,
+} from "./src/server/subscriptionEngine";
 
 dotenv.config();
 
@@ -507,6 +529,422 @@ Format your response as a valid JSON object:
     }
   });
 
+  // ==========================================
+  // DigitalPlayGrid Subscription & Entitlement API
+  // ==========================================
+
+  // 1. Get all public subscription plans
+  app.get("/api/plans", (req, res) => {
+    res.json({ plans: SUBSCRIPTION_PLANS });
+  });
+
+  // 2. Get current user's active subscription and entitlement
+  app.get("/api/subscriptions/current", (req, res) => {
+    const authHeader = req.headers.authorization;
+    const userId = (req.query.userId as string) || (authHeader?.replace("Bearer ", "").trim() ?? "anonymous_demo");
+    const email = (req.query.email as string) || "";
+
+    const entitlement = computeUserEntitlement(userId, email);
+    res.json({
+      entitlement,
+      serverTime: new Date().toISOString(),
+    });
+  });
+
+  // 3. Process Checkout (Trial 72h, 30d, 1y, Lifetime)
+  app.post("/api/subscriptions/checkout", (req, res) => {
+    const { planId, userId, userEmail, userName, paymentMethod, paymentDetails } = req.body;
+
+    if (!userId || !planId) {
+      return res.status(400).json({
+        error: "INVALID_REQUEST",
+        message: "Plan ID and User ID are required to process checkout.",
+      });
+    }
+
+    const result = processSubscriptionCheckout({
+      planId,
+      userId,
+      userEmail: userEmail || `${userId}@creator.playthrough.app`,
+      userName: userName || "Creator",
+      paymentMethod: paymentMethod || "card",
+    });
+
+    if (!result.success) {
+      return res.status(result.code === "TRIAL_ALREADY_USED" ? 409 : 400).json({
+        error: result.code || "CHECKOUT_FAILED",
+        message: result.error,
+      });
+    }
+
+    return res.json({
+      success: true,
+      subscription: result.subscription,
+      entitlement: result.entitlement,
+      message: `Successfully activated ${result.subscription?.tier.toUpperCase()} pass!`,
+    });
+  });
+
+  // 4. Cancel Subscription (Disables auto-renew)
+  app.post("/api/subscriptions/cancel", (req, res) => {
+    const { userId, subscriptionId } = req.body;
+
+    if (!userId || !subscriptionId) {
+      return res.status(400).json({ error: "Missing userId or subscriptionId" });
+    }
+
+    const result = cancelUserSubscription(userId, subscriptionId);
+    if (!result.success) {
+      return res.status(404).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      subscription: result.subscription,
+      message: "Subscription auto-renewal has been cancelled.",
+    });
+  });
+
+  // 4b. Redeem Product Key (e.g. DPG456852DS754563)
+  app.post("/api/subscriptions/redeem-key", (req, res) => {
+    const { key, userId, userEmail, userName } = req.body;
+
+    if (!key || !userId) {
+      return res.status(400).json({
+        error: "INVALID_REQUEST",
+        message: "Product key and User ID are required for redemption.",
+      });
+    }
+
+    const result = redeemProductKey({
+      key,
+      userId,
+      userEmail: userEmail || `${userId}@creator.playthrough.app`,
+      userName: userName || "Creator",
+    });
+
+    if (!result.success) {
+      return res.status(result.code === "KEY_ALREADY_REDEEMED" ? 409 : 400).json({
+        error: result.code || "REDEMPTION_FAILED",
+        message: result.error,
+      });
+    }
+
+    return res.json({
+      success: true,
+      subscription: result.subscription,
+      entitlement: result.entitlement,
+      keyInfo: result.keyInfo,
+      message: `Key successfully redeemed! Activated ${result.keyInfo?.planName || result.subscription?.tier.toUpperCase()}.`,
+    });
+  });
+
+  // 4c. Validate Product Key Info (Pre-check)
+  app.get("/api/subscriptions/key-info", (req, res) => {
+    const key = (req.query.key as string) || "";
+    const info = getProductKeyInfo(key);
+    res.json(info);
+  });
+
+  // 4d. Get All Product Keys in Vault (Admin / Distribution Reference)
+  app.get("/api/subscriptions/keys-vault", (req, res) => {
+    const allKeys = getAllProductKeys();
+    const availableKeys = allKeys.filter((k) => !k.redeemed && !k.isRedeemed);
+    res.json({
+      total: availableKeys.length,
+      keys: availableKeys,
+      allKeysCount: allKeys.length,
+      breakdown: {
+        trial_72h: availableKeys.filter((k) => k.planId === "trial-72h" || k.planTier === "trial" || k.tier === "trial").length,
+        monthly_30d: availableKeys.filter((k) => k.planId === "monthly-30d" || k.planTier === "monthly" || k.tier === "monthly").length,
+        annual_1y: availableKeys.filter((k) => k.planId === "annual-1y" || k.planTier === "annual" || k.tier === "annual").length,
+        redeemed: allKeys.filter((k) => k.redeemed || k.isRedeemed).length,
+        available: availableKeys.length,
+      },
+    });
+  });
+
+  // 4e. Admin API: Generate new batch of product keys
+  app.post("/api/admin/generate-keys", (req, res) => {
+    const { count, planId, planTier, durationDays, planName, adminEmail } = req.body;
+
+    const generated = adminGenerateKeys({
+      count: count || 5,
+      planId: planId || "trial-72h",
+      planTier: planTier || "trial",
+      durationDays: durationDays || 3,
+      planName: planName || "Studio Pass",
+      adminEmail: adminEmail || "syntrex@gmail.com",
+    });
+
+    res.json({
+      success: true,
+      count: generated.length,
+      keys: generated,
+      message: `Successfully generated ${generated.length} new product keys!`,
+    });
+  });
+
+  // 4f. Admin API: Reset key to unused
+  app.post("/api/admin/reset-key", (req, res) => {
+    const { key, adminEmail } = req.body;
+    if (!key) {
+      return res.status(400).json({ error: "Key is required." });
+    }
+
+    const success = adminResetKey(key, adminEmail);
+    if (!success) {
+      return res.status(404).json({ error: "Key not found in database." });
+    }
+
+    res.json({ success: true, message: `Key ${key} reset to available (unused).` });
+  });
+
+  // 4g. Admin API: Delete key
+  app.post("/api/admin/delete-key", (req, res) => {
+    const { key, adminEmail } = req.body;
+    if (!key) {
+      return res.status(400).json({ error: "Key is required." });
+    }
+
+    const success = adminDeleteKey(key, adminEmail);
+    if (!success) {
+      return res.status(404).json({ error: "Key not found in database." });
+    }
+
+    res.json({ success: true, message: `Key ${key} deleted from system.` });
+  });
+
+  // 4h. Admin API: Override user subscription entitlement
+  app.post("/api/admin/override-user-plan", (req, res) => {
+    const { userId, email, tier, durationDays, adminEmail } = req.body;
+    if (!userId || !tier) {
+      return res.status(400).json({ error: "userId and tier are required." });
+    }
+
+    const entitlement = adminOverrideUserPlan({
+      userId,
+      email,
+      tier,
+      durationDays: durationDays || 30,
+      adminEmail,
+    });
+
+    res.json({
+      success: true,
+      entitlement,
+      message: `User ${userId} plan successfully updated to ${tier.toUpperCase()}!`,
+    });
+  });
+
+  // 4i. Admin API: Get System & Key Statistics
+  app.get("/api/admin/stats", (req, res) => {
+    const stats = adminGetStats();
+    res.json(stats);
+  });
+
+  // 4j. Admin API: Get and manage studio administrators
+  app.get("/api/admin/admin-users", (req, res) => {
+    const list = getAdminUsersList();
+    res.json({ admins: list });
+  });
+
+  app.post("/api/admin/admin-users", (req, res) => {
+    const { email, username, role, adminEmail } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email or username is required." });
+    }
+    const result = addAdminUser({ email, username, role, adminEmail });
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  });
+
+  app.delete("/api/admin/admin-users", (req, res) => {
+    const { email, adminEmail } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+    const result = removeAdminUser({ email, adminEmail });
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  });
+
+  // 5. Audit Logs API (Security event trail)
+  app.get("/api/audit-logs", (req, res) => {
+    const userId = req.query.userId as string;
+    const logs = getAuditLogs(userId);
+    res.json({ logs });
+  });
+
+  app.post("/api/audit-logs", (req, res) => {
+    const { userId, userEmail, action, resource, status, details } = req.body;
+    const log = recordAuditLog({
+      userId: userId || "anonymous",
+      userEmail,
+      action: action || "client_action",
+      resource: resource || "ui",
+      status: status || "allowed",
+      details,
+      ip: req.ip || req.socket.remoteAddress,
+    });
+    res.json({ success: true, log });
+  });
+
+  // 6. Backend-Enforced Series API
+  app.get("/api/series", (req, res) => {
+    const userId = (req.query.userId as string) || req.headers.authorization?.replace("Bearer ", "").trim();
+    if (!userId || userId === "anonymous_demo") {
+      return res.json({
+        isDemo: true,
+        seriesList: [],
+        message: "Demo mode. Please subscribe to create and persist custom playthrough series.",
+      });
+    }
+
+    const list = getUserSeriesList(userId);
+    res.json({ isDemo: false, seriesList: list });
+  });
+
+  // Create Series - ENFORCED: Rejects unsubscribed/demo users
+  app.post("/api/series", (req, res) => {
+    const { userId, userEmail, series } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: "UNAUTHORIZED", message: "Authentication is required." });
+    }
+
+    const entitlement = computeUserEntitlement(userId, userEmail);
+
+    // Strict entitlement check
+    if (!entitlement.hasActiveSubscription || !entitlement.canCreateSeries) {
+      recordAuditLog({
+        userId,
+        userEmail,
+        action: "series_create_blocked",
+        resource: "/api/series",
+        status: "denied",
+        details: { planTier: entitlement.planTier, seriesTitle: series?.gameTitle },
+        ip: req.ip,
+      });
+
+      return res.status(403).json({
+        error: "UPGRADE_REQUIRED",
+        message: "A valid DigitalPlayGrid subscription (72-Hour Trial, Monthly, Annual, or Lifetime) is required to create new playthrough series.",
+        requiredFeature: "canCreateSeries",
+        currentTier: entitlement.planTier,
+      });
+    }
+
+    const existing = getUserSeriesList(userId);
+    if (existing.length >= entitlement.maxSeriesCount) {
+      return res.status(403).json({
+        error: "SERIES_LIMIT_REACHED",
+        message: `Your current plan allows up to ${entitlement.maxSeriesCount} series. Please upgrade to create more.`,
+      });
+    }
+
+    const updated = [series, ...existing.filter((s) => s.id !== series.id)];
+    saveUserSeriesList(userId, updated);
+
+    recordAuditLog({
+      userId,
+      userEmail,
+      action: "series_created",
+      resource: `/api/series/${series.id}`,
+      status: "success",
+      details: { gameTitle: series.gameTitle, episodesCount: series.episodes?.length || 0 },
+      ip: req.ip,
+    });
+
+    res.json({ success: true, series });
+  });
+
+  // Edit Series - ENFORCED
+  app.put("/api/series/:id", (req, res) => {
+    const { userId, userEmail, series } = req.body;
+    const seriesId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "UNAUTHORIZED", message: "Authentication is required." });
+    }
+
+    const entitlement = computeUserEntitlement(userId, userEmail);
+
+    if (!entitlement.hasActiveSubscription || !entitlement.canEditSeries) {
+      recordAuditLog({
+        userId,
+        userEmail,
+        action: "series_edit_blocked",
+        resource: `/api/series/${seriesId}`,
+        status: "denied",
+        details: { planTier: entitlement.planTier, seriesId },
+        ip: req.ip,
+      });
+
+      return res.status(403).json({
+        error: "UPGRADE_REQUIRED",
+        message: "A valid DigitalPlayGrid subscription is required to edit and save playthrough series.",
+        requiredFeature: "canEditSeries",
+        currentTier: entitlement.planTier,
+      });
+    }
+
+    const existing = getUserSeriesList(userId);
+    const updated = existing.map((s) => (s.id === seriesId ? series : s));
+    saveUserSeriesList(userId, updated);
+
+    recordAuditLog({
+      userId,
+      userEmail,
+      action: "series_updated",
+      resource: `/api/series/${seriesId}`,
+      status: "success",
+      details: { gameTitle: series.gameTitle },
+      ip: req.ip,
+    });
+
+    res.json({ success: true, series });
+  });
+
+  // Delete Series - ENFORCED
+  app.delete("/api/series/:id", (req, res) => {
+    const { userId, userEmail } = req.body;
+    const seriesId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "UNAUTHORIZED", message: "Authentication is required." });
+    }
+
+    const entitlement = computeUserEntitlement(userId, userEmail);
+
+    if (!entitlement.hasActiveSubscription || !entitlement.canEditSeries) {
+      return res.status(403).json({
+        error: "UPGRADE_REQUIRED",
+        message: "A valid subscription is required to delete playthrough series.",
+      });
+    }
+
+    const existing = getUserSeriesList(userId);
+    const updated = existing.filter((s) => s.id !== seriesId);
+    saveUserSeriesList(userId, updated);
+
+    recordAuditLog({
+      userId,
+      userEmail,
+      action: "series_deleted",
+      resource: `/api/series/${seriesId}`,
+      status: "success",
+      details: { seriesId },
+      ip: req.ip,
+    });
+
+    res.json({ success: true, deletedId: seriesId });
+  });
+
   // In-memory Cloud Backup store
   let cloudBackupStore: { seriesList: any[]; updatedAt: string } | null = null;
 
@@ -518,10 +956,21 @@ Format your response as a valid JSON object:
   });
 
   app.post("/api/backup", (req, res) => {
-    const { seriesList } = req.body;
+    const { seriesList, userId, userEmail } = req.body;
     if (!seriesList || !Array.isArray(seriesList)) {
       return res.status(400).json({ error: "Invalid series data" });
     }
+
+    if (userId) {
+      const entitlement = computeUserEntitlement(userId, userEmail);
+      if (!entitlement.hasActiveSubscription && !entitlement.canCloudBackup) {
+        return res.status(403).json({
+          error: "UPGRADE_REQUIRED",
+          message: "Cloud backup and real-time multi-device sync is a premium subscription feature.",
+        });
+      }
+    }
+
     cloudBackupStore = {
       seriesList,
       updatedAt: new Date().toISOString(),

@@ -1,6 +1,6 @@
 {
-  "name": "Playthrough Studio Pro",
-  "description": "Professional YouTube Let's Play & Playthrough Series Planner with episode breakdowns, 1280x720 thumbnail generator, SEO tags, and production workflow.",
+  "name": "DigitalPlayGrid YouTube Playthrough Planner",
+  "description": "Professional YouTube gaming playthrough and let's play production management platform with comprehensive database, entitlement access control, OBS integration, and high-CTR thumbnail studio.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -87,7 +87,7 @@ export const fetchUserSeriesList = async (userId: string): Promise<PlaythroughSe
         playthroughType: data.playthroughType || "100% Walkthrough",
         coverImage: data.coverImage || "",
         gameTitleLogo: data.gameTitleLogo || data.gameLogoUrl || "",
-        useTitleLogo: data.useTitleLogo ?? true,
+        useTitleLogo: data.useTitleLogo ?? false,
         episodes: data.episodes || [],
         quests: data.quests || [],
         gameSynopsis: data.gameSynopsis || data.synopsis || "",

@@ -83,6 +83,7 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
   >("general");
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
   const [autoUpdateRecorded, setAutoUpdateRecorded] = useState<boolean>(true);
+  const [updateEpisodeDuration, setUpdateEpisodeDuration] = useState<boolean>(true);
   const [copiedTimestamps, setCopiedTimestamps] = useState<boolean>(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
@@ -225,6 +226,9 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
     setIsPaused(false);
 
     const recordedMins = Math.max(1, Math.round(elapsedSeconds / 60));
+    // If the session was under 3 minutes (e.g. quick test), keep the original estimated duration unless explicitly wanted
+    const shouldApplyDuration = updateEpisodeDuration && (elapsedSeconds >= 180 || recordedMins >= activeEp.estDurationMinutes);
+    const finalDuration = shouldApplyDuration ? recordedMins : activeEp.estDurationMinutes;
 
     // Append timestamps to episode description if not already present
     let updatedDesc = activeEp.youtubeDescription || "";
@@ -236,7 +240,7 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
 
     const updatedEp: Episode = {
       ...activeEp,
-      estDurationMinutes: recordedMins > 0 ? recordedMins : activeEp.estDurationMinutes,
+      estDurationMinutes: finalDuration,
       youtubeDescription: updatedDesc,
       status: autoUpdateRecorded ? "recorded" : activeEp.status,
     };
@@ -246,7 +250,7 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
       onUpdateStatus(activeEp.id, "recorded");
     }
 
-    setSaveSuccessMsg(`Episode #${activeEp.partNumber} saved! (${recordedMins} mins logged, status: ${autoUpdateRecorded ? "Recorded" : activeEp.status})`);
+    setSaveSuccessMsg(`Episode #${activeEp.partNumber} saved! (${finalDuration} mins, status: ${autoUpdateRecorded ? "Recorded" : activeEp.status})`);
     setTimeout(() => setSaveSuccessMsg(null), 3500);
   };
 
@@ -698,20 +702,35 @@ export const RecordingTimerModal: React.FC<RecordingTimerModalProps> = ({
           </div>
 
           {/* Settings & Auto Sync */}
-          <div className="bg-[#101422] border border-blue-500/20 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-300">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoUpdateRecorded}
-                onChange={(e) => setAutoUpdateRecorded(e.target.checked)}
-                className="rounded border-zinc-700 text-cyan-500 focus:ring-cyan-400"
-              />
-              <span>Automatically update episode status to <strong className="text-amber-300 font-bold">Recorded</strong> when session ends</span>
-            </label>
+          <div className="bg-[#101422] border border-blue-500/20 rounded-xl p-4 space-y-2.5 text-xs text-zinc-300">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoUpdateRecorded}
+                  onChange={(e) => setAutoUpdateRecorded(e.target.checked)}
+                  className="rounded border-zinc-700 text-cyan-500 focus:ring-cyan-400"
+                />
+                <span>Automatically mark status as <strong className="text-amber-300 font-bold">Recorded</strong> when saved</span>
+              </label>
 
-            <div className="flex items-center gap-2 text-zinc-400">
-              <Mic className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Mic & Gameplay Audio Soundcheck Recommended</span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={updateEpisodeDuration}
+                  onChange={(e) => setUpdateEpisodeDuration(e.target.checked)}
+                  className="rounded border-zinc-700 text-cyan-500 focus:ring-cyan-400"
+                />
+                <span>Update episode duration with session length <span className="text-cyan-300 font-mono">({Math.max(1, Math.round(elapsedSeconds / 60))}m)</span></span>
+              </label>
+            </div>
+
+            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-400">
+              <div className="flex items-center gap-1.5">
+                <Mic className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Short sessions under 3 minutes protect and preserve the planned {activeEp.estDurationMinutes}m estimate</span>
+              </div>
+              <span className="text-zinc-500">Auto-saved locally</span>
             </div>
           </div>
         </div>

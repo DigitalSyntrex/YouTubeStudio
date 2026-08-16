@@ -33,9 +33,14 @@ import {
   CircleDot,
   Radio,
   Lock,
-  Plus
+  Plus,
+  Crown,
+  CreditCard,
+  History,
+  AlertCircle
 } from "lucide-react";
 import { useAuth, UserProfile } from "../context/AuthContext";
+import { useSubscription } from "../context/SubscriptionContext";
 import { AppThemeId, THEME_CONFIGS } from "../utils/themeUtils";
 import { PlaythroughSeries, Episode, Achievement } from "../types";
 import { DEFAULT_CREATOR_AVATARS, CreatorAvatarPreset } from "../data/defaultAvatars";
@@ -44,6 +49,7 @@ import {
   calculateGamerscore,
   playAchievementUnlockSound,
 } from "../utils/achievementManager";
+import { ProductKeyRedeemSection } from "./ProductKeyRedeemSection";
 
 interface AccountSettingsModalProps {
   isOpen: boolean;
@@ -56,9 +62,11 @@ interface AccountSettingsModalProps {
   onOpenPlaythroughView?: () => void;
   onSelectEpisode?: (ep: Episode) => void;
   onOpenNewSeriesModal?: () => void;
+  initialTab?: TabType;
+  onOpenAdminPortal?: () => void;
 }
 
-type TabType = "overview" | "achievements" | "profile" | "preferences";
+type TabType = "overview" | "achievements" | "profile" | "preferences" | "subscription";
 
 const PRESET_AVATARS = DEFAULT_CREATOR_AVATARS;
 
@@ -73,10 +81,19 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   onOpenPlaythroughView,
   onSelectEpisode,
   onOpenNewSeriesModal,
+  initialTab = "overview",
+  onOpenAdminPortal,
 }) => {
   const { currentUser, userProfile, updateUserProfile, logout } = useAuth();
+  const { entitlement, activeSubscription, openUpgradeModal, cancelAutoRenew, auditLogs } = useSubscription();
   
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const getValidTab = (tab: unknown): TabType => {
+    return typeof tab === "string" && ["overview", "achievements", "profile", "preferences", "subscription"].includes(tab)
+      ? (tab as TabType)
+      : "overview";
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>(() => getValidTab(initialTab));
   const [displayName, setDisplayName] = useState(userProfile?.displayName || "");
   const [bio, setBio] = useState(userProfile?.bio || "");
   const [channelName, setChannelName] = useState(userProfile?.channelName || "");
@@ -98,6 +115,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(getValidTab(initialTab));
       setShowAllSeries(false);
       setAchievements(loadAchievements());
       setDisplayName(userProfile?.displayName || "");
@@ -111,7 +129,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       setAudioBitrate(userProfile?.recordingAudioBitrate || "320 kbps (Studio Quality)");
       setSelectedTheme(currentTheme);
     }
-  }, [isOpen, userProfile, currentTheme]);
+  }, [isOpen, initialTab, userProfile, currentTheme]);
 
   if (!isOpen) return null;
 
@@ -263,7 +281,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         </div>
 
         {/* Navigation Tabs - Responsive Grid layout so no tabs are cut off */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 border-b border-white/10 pb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2 border-b border-white/10 pb-3">
           <button
             onClick={() => setActiveTab("overview")}
             className={`w-full justify-center px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-center ${
@@ -286,6 +304,18 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           >
             <Trophy className="w-3.5 h-3.5 text-amber-300 shrink-0" />
             <span className="truncate">Achievements ({gamerscore.unlockedCount}/{gamerscore.totalCount})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("subscription")}
+            className={`w-full justify-center px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-center ${
+              activeTab === "subscription"
+                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 shadow-md shadow-amber-500/30 font-black"
+                : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 bg-[#070a12]/60 border border-amber-500/20"
+            }`}
+          >
+            <Crown className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Plan & Billing</span>
           </button>
 
           <button
@@ -750,7 +780,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
           {/* TAB 3: CREATOR PROFILE & BRANDING */}
           {activeTab === "profile" && (
-            <form onSubmit={handleSave} className="space-y-5">
+            <div className="space-y-6">
+              <form onSubmit={handleSave} className="space-y-5">
               {/* Avatar Picker & Upload */}
               <div className="p-4 bg-[#06080e] border border-white/10 rounded-2xl space-y-3">
                 <label className="block text-xs font-bold text-zinc-200 uppercase tracking-wider">
@@ -802,6 +833,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   <div className="flex flex-wrap items-center gap-1.5">
                     {[
                       { id: "all", label: `All Avatars (${(PRESET_AVATARS || []).length})` },
+                      { id: "Gaming & Genres", label: `Gaming & Genres (${(PRESET_AVATARS || []).filter(p => p.category === "Gaming & Genres").length})` },
                       { id: "Cyber & Heroes", label: `Cyber & Heroes (${(PRESET_AVATARS || []).filter(p => p.category === "Cyber & Heroes").length})` },
                       { id: "Icons & Mythos", label: `Icons & Mythos (${(PRESET_AVATARS || []).filter(p => p.category === "Icons & Mythos").length})` },
                       { id: "Gear & Tech", label: `Gear & Tech (${(PRESET_AVATARS || []).filter(p => p.category === "Gear & Tech").length})` },
@@ -822,7 +854,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   </div>
 
                   {/* Avatars Grid */}
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[260px] overflow-y-auto pr-1 p-2 rounded-xl bg-black/40 border border-white/5 custom-synopsis-scrollbar">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[280px] overflow-y-auto pr-1 p-2 rounded-xl bg-black/40 border border-white/5 custom-synopsis-scrollbar">
                     {(PRESET_AVATARS || [])
                       .filter((p) => avatarCategory === "all" || p.category === avatarCategory)
                       .map((preset) => {
@@ -846,7 +878,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   // Fallback to public route if needed
-                                  (e.target as HTMLImageElement).src = `/${preset.id}.png`;
+                                  (e.target as HTMLImageElement).src = `/avatars_128/${preset.id}.png`;
                                 }}
                               />
                               {isSelected && (
@@ -950,6 +982,16 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 </button>
               </div>
             </form>
+
+            {/* Product Key Activation Section in Profile */}
+            <div className="pt-4 border-t border-white/10">
+              <ProductKeyRedeemSection
+                onSuccess={() => {
+                  // Refresh or trigger notifications
+                }}
+              />
+            </div>
+          </div>
           )}
 
           {/* TAB 4: PREFERENCES & CLOUD */}
@@ -1074,6 +1116,196 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 </button>
               </div>
             </form>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB 5: SUBSCRIPTION, ENTITLEMENTS & ACCESS CONTROL       */}
+          {/* ======================================================== */}
+          {activeTab === "subscription" && (
+            <div className="space-y-6">
+              {/* Current Active Plan Overview Card */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-[#0d111d] to-indigo-950/40 border border-amber-500/30 space-y-4 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/30 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                      <Crown className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-amber-400/90 uppercase tracking-wider">
+                          Current Membership
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                          entitlement.hasActiveSubscription
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                            : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        }`}>
+                          {entitlement.hasActiveSubscription ? "Active Subscriber" : "Demo Mode (Read-Only)"}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-black text-white">
+                        {entitlement.planTier === "trial"
+                          ? "72-Hour Full Studio Pass"
+                          : entitlement.planTier === "monthly"
+                          ? "Creator Monthly Pass"
+                          : entitlement.planTier === "annual"
+                          ? "Studio Pro Annual Pass"
+                          : entitlement.planTier === "lifetime"
+                          ? "Legendary Lifetime Founder"
+                          : "Free Demonstration Mode"}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      openUpgradeModal();
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-zinc-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{entitlement.hasActiveSubscription ? "Change / Upgrade Pass" : "Unlock Full Access"}</span>
+                  </button>
+                </div>
+
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 bg-black/40 border border-white/10 rounded-xl">
+                    <span className="text-[10px] text-zinc-400 block mb-1">Pass Status</span>
+                    <span className="text-xs font-bold text-white uppercase flex items-center gap-1.5">
+                      {entitlement.hasActiveSubscription ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Active
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-400" /> Read-Only
+                        </>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 border border-white/10 rounded-xl">
+                    <span className="text-[10px] text-zinc-400 block mb-1">Time Remaining</span>
+                    <span className="text-xs font-bold text-amber-300">
+                      {entitlement.timeRemainingFormatted || "Unlimited"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 border border-white/10 rounded-xl">
+                    <span className="text-[10px] text-zinc-400 block mb-1">AI SEO Monthly Quota</span>
+                    <span className="text-xs font-bold text-cyan-300">
+                      {entitlement.aiUsedThisMonth} / {entitlement.aiMonthlyQuota} Gens
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-black/40 border border-white/10 rounded-xl">
+                    <span className="text-[10px] text-zinc-400 block mb-1">Series Capacity</span>
+                    <span className="text-xs font-bold text-purple-300">
+                      {entitlement.maxSeriesCount} Series Max
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Key Redemption Section */}
+              <ProductKeyRedeemSection onOpenAdminPortal={onOpenAdminPortal} />
+
+              {/* Entitlement Permissions Matrix */}
+              <div className="p-4 bg-[#06080e] border border-white/10 rounded-2xl space-y-3">
+                <h4 className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Backend-Enforced Creator Capabilities
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                    entitlement.canCreateSeries
+                      ? "bg-emerald-950/20 border-emerald-500/30 text-zinc-200"
+                      : "bg-zinc-900/30 border-zinc-800 text-zinc-500"
+                  }`}>
+                    <span>Create New Playthrough Series</span>
+                    <span className="font-bold text-[11px] uppercase">
+                      {entitlement.canCreateSeries ? "Unlocked" : "Locked (Demo)"}
+                    </span>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                    entitlement.canEditSeries
+                      ? "bg-emerald-950/20 border-emerald-500/30 text-zinc-200"
+                      : "bg-zinc-900/30 border-zinc-800 text-zinc-500"
+                  }`}>
+                    <span>Save & Edit Episode Breakdowns</span>
+                    <span className="font-bold text-[11px] uppercase">
+                      {entitlement.canEditSeries ? "Unlocked" : "Locked (Demo)"}
+                    </span>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                    entitlement.canExportBatch
+                      ? "bg-emerald-950/20 border-emerald-500/30 text-zinc-200"
+                      : "bg-zinc-900/30 border-zinc-800 text-zinc-500"
+                  }`}>
+                    <span>Batch Export (CSV, Markdown, YouTube Studio)</span>
+                    <span className="font-bold text-[11px] uppercase">
+                      {entitlement.canExportBatch ? "Unlocked" : "Locked (Demo)"}
+                    </span>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                    entitlement.canCloudBackup
+                      ? "bg-emerald-950/20 border-emerald-500/30 text-zinc-200"
+                      : "bg-zinc-900/30 border-zinc-800 text-zinc-500"
+                  }`}>
+                    <span>Cloud Sync & Multi-Device Backup</span>
+                    <span className="font-bold text-[11px] uppercase">
+                      {entitlement.canCloudBackup ? "Unlocked" : "Locked (Demo)"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security & Access Audit Log View */}
+              <div className="p-4 bg-[#06080e] border border-white/10 rounded-2xl space-y-3">
+                <h4 className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                  <History className="w-4 h-4 text-cyan-400" /> Account Security & Entitlement Audit Trail
+                </h4>
+                <p className="text-[11px] text-zinc-400">
+                  Every subscription checkout, trial verification, and protected resource access is cryptographically audited.
+                </p>
+
+                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                  {auditLogs.length === 0 ? (
+                    <div className="text-zinc-500 text-center py-4 italic text-xs">
+                      No security audit events recorded in this session.
+                    </div>
+                  ) : (
+                    auditLogs.slice(0, 10).map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-2.5 bg-black/40 border border-white/5 rounded-xl flex items-center justify-between gap-2 text-[11px]"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${
+                              log.status === "success" || log.status === "allowed"
+                                ? "bg-emerald-400"
+                                : "bg-red-400"
+                            }`}
+                          />
+                          <span className="font-mono text-zinc-300 truncate">{log.action}</span>
+                          <span className="text-zinc-500 truncate hidden sm:inline">({log.resource})</span>
+                        </div>
+                        <div className="text-zinc-500 text-[10px] shrink-0 font-mono">
+                          {new Date(log.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </div>
 

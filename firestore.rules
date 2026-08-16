@@ -1,19 +1,91 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profile documents - allow creators to read and store their profile
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && (
+        request.auth.uid == userId ||
+        request.auth.token.email == 'syntrex@gmail.com' ||
+        request.auth.token.email == 'digitalplaygrid@gmail.com' ||
+        request.auth.token.email == 'digitalsyntrex@gmail.com'
+      );
+    }
+
+    // Test connection check
+    match /test/{testId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Public Subscription Plans (Read-only catalog for users and visitors)
+    match /subscription_plans/{planId} {
+      allow read: if true;
+      allow write: if isSignedIn() && (
+        request.auth.token.email in ['syntrex@gmail.com', 'digitalplaygrid@gmail.com', 'digitalsyntrex@gmail.com']
+      );
+    }
+
+    // Public / Shared Demo Series (Read-only for all visitors & demo explore)
+    match /demoSeries/{seriesId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // User Profile Documents - allows user to read and update their profile document
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn() && (
+        request.auth.uid == userId ||
+        request.auth.token.email in ['syntrex@gmail.com', 'digitalplaygrid@gmail.com', 'digitalsyntrex@gmail.com']
+      );
     }
 
-    // Series documents - allow creators to store and sync their playthrough series
+    // User Subscriptions (Subscriber and admin records)
+    match /subscriptions/{subId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // User Entitlements (Subscriber and admin permissions)
+    match /entitlements/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Trial Usage Records (Anti-abuse tracking)
+    match /trial_usage/{trialId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Payment Receipts & Transaction Log
+    match /payments/{paymentId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Audit Logs
+    match /audit_logs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Playthrough Series (Subscriber-owned content)
     match /userSeries/{seriesId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
-    // Fallback rule
+    // Global Default Deny
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
+

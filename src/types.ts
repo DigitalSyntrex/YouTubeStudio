@@ -33,7 +33,7 @@ export interface PlaythroughSeries {
   id: string;
   gameTitle: string;
   gameTitleLogo?: string; // DataURL or image URL for custom game title logo
-  useTitleLogo?: boolean; // Toggles displaying image logo vs plain text (default true if logo exists)
+  useTitleLogo?: boolean; // Toggles displaying image logo vs plain text (default false for clean text unless custom logo added)
   gameSynopsis?: string; // AI web-scraped plot & story overview of the active game
   gameSynopsisSource?: string; // e.g. "Web Scraped via Google Search Grounding"
   synopsis?: string; // Compatibility alias
@@ -235,5 +235,136 @@ export interface Achievement {
 export interface AchievementUnlockToastData {
   achievement: Achievement;
   timestamp: number;
+}
+
+// ----------------------------------------------------
+// Subscription, Entitlement & Access Control Types
+// ----------------------------------------------------
+
+export type PlanTier = "free_demo" | "trial" | "monthly" | "annual" | "lifetime";
+
+export type BillingInterval = "72_hours" | "30_days" | "1_year" | "lifetime";
+
+export type SubscriptionStatus = "active" | "trialing" | "expired" | "cancelled";
+
+export interface SubscriptionPlan {
+  id: string; // e.g. "trial-72h", "monthly-30d", "annual-1y", "lifetime"
+  name: string;
+  badgeLabel?: string;
+  tagline: string;
+  tier: PlanTier;
+  priceUsd: number;
+  regularPriceUsd?: number;
+  billingInterval: BillingInterval;
+  durationDays: number;
+  isRenewable: boolean;
+  isOneTime: boolean;
+  active: boolean;
+  popular?: boolean;
+  features: string[];
+}
+
+export interface UserSubscription {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  planId: string;
+  tier: PlanTier;
+  status: SubscriptionStatus;
+  startDate: string; // ISO
+  endDate: string; // ISO
+  autoRenew: boolean;
+  amountPaid: number;
+  paymentMethod?: string;
+  transactionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserEntitlement {
+  userId: string;
+  planTier: PlanTier;
+  hasActiveSubscription: boolean;
+  isTrial: boolean;
+  isTrialExpired: boolean;
+  canCreateSeries: boolean;
+  canEditSeries: boolean;
+  canExportBatch: boolean;
+  canGenerateAi: boolean;
+  canUseObsOverlay: boolean;
+  canCloudBackup: boolean;
+  maxSeriesCount: number;
+  aiMonthlyQuota: number;
+  aiUsedThisMonth: number;
+  expiresAt: string | null; // ISO string or null for lifetime
+  timeRemainingSeconds?: number;
+  timeRemainingFormatted?: string;
+  updatedAt: string;
+}
+
+export interface TrialUsageRecord {
+  id: string;
+  userId: string;
+  email: string;
+  claimedAt: string;
+  expiresAt: string;
+  transactionId: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  userId: string;
+  planId: string;
+  planName: string;
+  amount: number;
+  currency: string;
+  status: "succeeded" | "pending" | "refunded";
+  provider: string;
+  createdAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  action: string;
+  resource: string;
+  status: "allowed" | "denied" | "success" | "error";
+  details?: Record<string, any>;
+  ip?: string;
+  timestamp: string;
+}
+
+export interface ProductKey {
+  key: string;
+  planId: string;
+  tier?: PlanTier;
+  planTier?: PlanTier;
+  planName: string;
+  durationDays: number;
+  isRedeemed?: boolean;
+  redeemed?: boolean;
+  redeemedByUserId?: string;
+  redeemedByUserEmail?: string;
+  redeemedBy?: string;
+  redeemedByEmail?: string;
+  redeemedAt?: string;
+  createdAt: string;
+}
+
+export interface GlobalSiteSettings {
+  announcementBanner: {
+    enabled: boolean;
+    text: string;
+    variant: "amber" | "emerald" | "blue" | "rose" | "purple";
+    linkUrl?: string;
+  };
+  enforceDemoMode: boolean;
+  allowGuestAccess: boolean;
+  aiQuotaMultiplier: number;
+  maintenanceMode: boolean;
+  maintenanceMessage?: string;
+  enableObsOverlays: boolean;
+  enableAiSeoGenerator: boolean;
 }
 
