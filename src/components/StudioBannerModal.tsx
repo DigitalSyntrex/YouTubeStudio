@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import defaultStudioLogo from "../assets/playthrough_studio_logo.svg";
+import defaultStudioLogo from "../assets/newlogo1.png";
 import {
   X,
   Upload,
@@ -37,7 +37,7 @@ export const DEFAULT_STUDIO_BANNER_CONFIG: StudioBannerConfig = {
   tagline: "",
   badgeText: "",
   presetLogoId: "gamepad_glow",
-  logoUrl: "/playthrough_studio_logo.svg",
+  logoUrl: "/newlogo1.png",
   useCustomImage: true,
   accentColor: "cyan",
   showStatsBar: true,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Episode, MissableAlert, PlaythroughSeries } from "../types";
 import { safeFetchJson } from "../utils/apiUtils";
 import { ThumbnailBuilder } from "./ThumbnailBuilder";
-import { getGameCharacterList, getCharacterBadgeIcon, cleanHeroName, normalizeHeroName, getCharacterEmojiIcon, getHeroAvatarUrl, resizeHeroAvatarImage, saveGlobalHeroAvatar, removeGlobalHeroAvatar } from "../utils/gameProtagonists";
+import { getGameCharacterList, getCharacterBadgeIcon, cleanHeroName, normalizeHeroName, getCharacterEmojiIcon, getHeroAvatarUrl, getBuiltInHeroAvatarSvg, resizeHeroAvatarImage, saveGlobalHeroAvatar, removeGlobalHeroAvatar } from "../utils/gameProtagonists";
 import {
   X,
   Copy,
@@ -616,6 +616,9 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                                   src={avatarUrl}
                                   alt={hero}
                                   className="w-8 h-8 rounded-full object-cover border-2 border-blue-400 shadow-sm shrink-0 bg-slate-950"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = getBuiltInHeroAvatarSvg(hero);
+                                  }}
                                 />
                                 <div className="min-w-0">
                                   <p className="text-xs font-bold text-slate-100 truncate">{cleanHeroName(hero)}</p>

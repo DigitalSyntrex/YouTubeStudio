@@ -236,11 +236,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           <div className="flex items-center gap-3.5">
             <div className="relative group">
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-700 border-2 border-blue-400/50 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-900/40">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{(displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
-                )}
+                <img
+                  src={avatarUrl || DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png"}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
+                  }}
+                />
               </div>
             </div>
             <div>
@@ -791,11 +794,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 <div className="flex items-center gap-4">
                   <div className="relative group shrink-0">
                     <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-tr from-blue-900 to-indigo-900 border-2 border-blue-400/40 flex items-center justify-center text-white text-xl font-bold">
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{(displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
-                      )}
+                      <img
+                        src={avatarUrl || DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png"}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
+                        }}
+                      />
                     </div>
                     <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-2xl flex items-center justify-center text-white cursor-pointer transition-opacity">
                       <Camera className="w-5 h-5" />

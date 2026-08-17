@@ -168,13 +168,14 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationModalProps>
                 </div>
                 {/* Creator Avatar Badge Overlay */}
                 <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white/80 bg-zinc-950 overflow-hidden shadow-lg flex items-center justify-center">
-                  {userProfile?.avatarUrl ? (
-                    <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-[10px] font-black text-amber-300">
-                      {(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
+                  <img
+                    src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                    alt="Creator"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
+                    }}
+                  />
                 </div>
               </div>
             </div>

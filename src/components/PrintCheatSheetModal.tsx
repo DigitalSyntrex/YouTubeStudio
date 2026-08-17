@@ -363,11 +363,14 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
               <div className="flex items-center gap-3">
                 {/* Creator Avatar */}
                 <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-300 flex items-center justify-center text-zinc-100 font-bold text-sm shrink-0">
-                  {userProfile?.avatarUrl ? (
-                    <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
-                  )}
+                  <img
+                    src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                    alt="Creator"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
+                    }}
+                  />
                 </div>
                 <div>
                   <div className="text-xs font-black uppercase tracking-widest text-zinc-600 flex items-center gap-1.5">

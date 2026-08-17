@@ -25,7 +25,8 @@ import {
   resizeHeroAvatarImage,
   saveGlobalHeroAvatar,
   removeGlobalHeroAvatar,
-  cleanHeroName
+  cleanHeroName,
+  getBuiltInHeroAvatarSvg
 } from "../utils/gameProtagonists";
 
 interface ProtagonistDBModalProps {
@@ -307,6 +308,9 @@ export const ProtagonistDBModal: React.FC<ProtagonistDBModalProps> = ({ onClose 
                             src={avatarUrl}
                             alt={mainHeroName}
                             className="w-10 h-10 rounded-full object-cover border-2 border-purple-500/50 shadow bg-slate-900"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = getBuiltInHeroAvatarSvg(mainHeroName);
+                            }}
                           />
                           <label
                             htmlFor={`protag-avatar-${idx}`}

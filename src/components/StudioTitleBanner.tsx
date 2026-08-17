@@ -1,7 +1,7 @@
 import React from "react";
 import { Settings } from "lucide-react";
 import { StudioBannerConfig } from "./StudioBannerModal";
-import defaultStudioLogo from "../assets/playthrough_studio_logo.svg";
+import defaultStudioLogo from "../assets/newlogo1.png";
 
 interface StudioTitleBannerProps {
   config: StudioBannerConfig;

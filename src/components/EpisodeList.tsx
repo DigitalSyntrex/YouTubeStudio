@@ -475,11 +475,14 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="relative w-5 h-5 rounded-md overflow-hidden bg-gradient-to-tr from-amber-600 to-amber-400 border border-amber-400/50 flex items-center justify-center text-white text-[9px] font-black shrink-0 shadow-sm">
-                      {userProfile?.avatarUrl ? (
-                        <img src={userProfile.avatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{(userProfile?.displayName || userProfile?.username || "C").slice(0, 2).toUpperCase()}</span>
-                      )}
+                      <img
+                        src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                        alt="Creator"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
+                        }}
+                      />
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />

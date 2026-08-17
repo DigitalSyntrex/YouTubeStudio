@@ -1,147 +1,244 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 600" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 360" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="65%">
-      <stop offset="0%" stop-color="#1c283c" />
-      <stop offset="50%" stop-color="#0e1422" />
-      <stop offset="100%" stop-color="#05070d" />
+    <!-- Background Radiant Gradients -->
+    <linearGradient id="bgLinear" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050814" />
+      <stop offset="50%" stop-color="#0a1128" />
+      <stop offset="100%" stop-color="#03060f" />
+    </linearGradient>
+
+    <radialGradient id="cyanAmbientGlow" cx="28%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.28" />
+      <stop offset="60%" stop-color="#0284c7" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
     </radialGradient>
 
-    <!-- Metallic Shield Gradient -->
-    <linearGradient id="shieldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#cbd5e1" />
-      <stop offset="30%" stop-color="#64748b" />
-      <stop offset="70%" stop-color="#1e293b" />
-      <stop offset="100%" stop-color="#94a3b8" />
+    <radialGradient id="purpleAmbientGlow" cx="80%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.25" />
+      <stop offset="70%" stop-color="#6366f1" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Metallic Shield Chrome Gradient -->
+    <linearGradient id="shieldChromeBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="25%" stop-color="#94a3b8" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="75%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#e2e8f0" />
     </linearGradient>
 
-    <linearGradient id="shieldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#283548" />
-      <stop offset="50%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#080c14" />
+    <linearGradient id="shieldInnerDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="40%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
     </linearGradient>
 
-    <!-- Red Play Frame Gradient -->
-    <linearGradient id="redFrameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f87171" />
-      <stop offset="40%" stop-color="#ef4444" />
+    <!-- Crimson Play Triangle Gradient -->
+    <linearGradient id="crimsonPlayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3366" />
+      <stop offset="45%" stop-color="#ef4444" />
       <stop offset="100%" stop-color="#991b1b" />
     </linearGradient>
 
-    <!-- Blue Circuit Fill Gradient -->
-    <radialGradient id="blueCircuitBg" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="#0284c7" />
-      <stop offset="60%" stop-color="#0369a1" />
-      <stop offset="100%" stop-color="#0f172a" />
-    </radialGradient>
-
-    <!-- Silver Play Triangle Gradient -->
-    <linearGradient id="silverPlay" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Silver Inner Arrow -->
+    <linearGradient id="silverArrow" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="50%" stop-color="#e2e8f0" />
+      <stop offset="60%" stop-color="#cbd5e1" />
       <stop offset="100%" stop-color="#64748b" />
     </linearGradient>
+
+    <!-- Text Chrome/Silver Gradient -->
+    <linearGradient id="chromeTitleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#f1f5f9" />
+      <stop offset="65%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+
+    <!-- Digital Cyan Gradient -->
+    <linearGradient id="cyanCyberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <!-- Glowing Drop Shadow Filters -->
+    <filter id="neonGlowCyan" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="neonGlowRed" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="hardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.95" />
+    </filter>
   </defs>
 
-  <!-- Canvas Background -->
-  <rect width="1200" height="600" fill="url(#bgGrad)" rx="16" />
+  <!-- Container Base -->
+  <rect width="1400" height="360" fill="url(#bgLinear)" rx="20" />
+  <rect width="1400" height="360" fill="url(#cyanAmbientGlow)" rx="20" />
+  <rect width="1400" height="360" fill="url(#purpleAmbientGlow)" rx="20" />
 
-  <!-- Brushed Metal Horizontal Texture Lines -->
-  <g opacity="0.08" stroke="#ffffff" stroke-width="0.5">
-    <line x1="0" y1="50" x2="1200" y2="50" />
-    <line x1="0" y1="100" x2="1200" y2="100" />
-    <line x1="0" y1="150" x2="1200" y2="150" />
-    <line x1="0" y1="200" x2="1200" y2="200" />
-    <line x1="0" y1="250" x2="1200" y2="250" />
-    <line x1="0" y1="300" x2="1200" y2="300" />
-    <line x1="0" y1="350" x2="1200" y2="350" />
-    <line x1="0" y1="400" x2="1200" y2="400" />
-    <line x1="0" y1="450" x2="1200" y2="450" />
-    <line x1="0" y1="500" x2="1200" y2="500" />
-    <line x1="0" y1="550" x2="1200" y2="550" />
+  <!-- Cyber Grid Pattern Overlay -->
+  <g opacity="0.12" stroke="#38bdf8" stroke-width="1">
+    <line x1="0" y1="45" x2="1400" y2="45" />
+    <line x1="0" y1="90" x2="1400" y2="90" />
+    <line x1="0" y1="135" x2="1400" y2="135" />
+    <line x1="0" y1="180" x2="1400" y2="180" />
+    <line x1="0" y1="225" x2="1400" y2="225" />
+    <line x1="0" y1="270" x2="1400" y2="270" />
+    <line x1="0" y1="315" x2="1400" y2="315" />
+
+    <line x1="100" y1="0" x2="100" y2="360" stroke-opacity="0.5" />
+    <line x1="200" y1="0" x2="200" y2="360" stroke-opacity="0.5" />
+    <line x1="300" y1="0" x2="300" y2="360" stroke-opacity="0.5" />
+    <line x1="400" y1="0" x2="400" y2="360" stroke-opacity="0.5" />
+    <line x1="500" y1="0" x2="500" y2="360" stroke-opacity="0.5" />
+    <line x1="600" y1="0" x2="600" y2="360" stroke-opacity="0.5" />
+    <line x1="700" y1="0" x2="700" y2="360" stroke-opacity="0.5" />
+    <line x1="800" y1="0" x2="800" y2="360" stroke-opacity="0.5" />
+    <line x1="900" y1="0" x2="900" y2="360" stroke-opacity="0.5" />
+    <line x1="1000" y1="0" x2="1000" y2="360" stroke-opacity="0.5" />
+    <line x1="1100" y1="0" x2="1100" y2="360" stroke-opacity="0.5" />
+    <line x1="1200" y1="0" x2="1200" y2="360" stroke-opacity="0.5" />
+    <line x1="1300" y1="0" x2="1300" y2="360" stroke-opacity="0.5" />
   </g>
 
-  <!-- Centered Shield & Traces Group -->
-  <g transform="translate(0, 40)">
-    <!-- Left Side Extended Circuit Traces -->
-    <g stroke="#334155" stroke-width="3" fill="none" opacity="0.8">
-      <path d="M 410,220 L 310,220 L 260,170 L 120,170 L 80,210 L 20,210" />
-      <path d="M 410,260 L 320,260 L 280,310 L 180,310 L 140,260 L 60,260 L 40,280 L 10,280" />
-      <path d="M 410,300 L 340,300 L 300,250 L 200,250 L 170,220 L 80,220" />
-      <path d="M 410,340 L 310,340 L 270,390 L 160,390 L 120,340 L 40,340" />
-      <path d="M 410,380 L 330,380 L 290,330 L 190,330 L 160,360 L 60,360" />
+  <!-- High-Tech Outer Border -->
+  <rect x="2" y="2" width="1396" height="356" rx="18" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.4" />
+  <rect x="6" y="6" width="1388" height="348" rx="14" fill="none" stroke="#00f0ff" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="16 8" />
 
-      <circle cx="260" cy="170" r="4.5" fill="#475569" />
-      <circle cx="120" cy="170" r="4.5" fill="#475569" />
-      <circle cx="80" cy="210" r="4.5" fill="#38bdf8" />
-      <circle cx="280" cy="310" r="4.5" fill="#475569" />
-      <circle cx="140" cy="260" r="4.5" fill="#475569" />
-      <circle cx="300" cy="250" r="4.5" fill="#38bdf8" />
-      <circle cx="170" cy="220" r="4.5" fill="#475569" />
-      <circle cx="270" cy="390" r="4.5" fill="#475569" />
-      <circle cx="120" cy="340" r="4.5" fill="#38bdf8" />
+  <!-- Corner Tech Accents -->
+  <path d="M 20 40 L 20 20 L 40 20" fill="none" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" />
+  <path d="M 1380 40 L 1380 20 L 1360 20" fill="none" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" />
+  <path d="M 20 320 L 20 340 L 40 340" fill="none" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" />
+  <path d="M 1380 320 L 1380 340 L 1360 340" fill="none" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" />
+
+  <!-- ==================== LEFT SHIELD / CREST EMBLEM ==================== -->
+  <g transform="translate(140, 180)" filter="url(#hardShadow)">
+    <!-- Outer Cyan Glow Halo -->
+    <path d="M 0 -115 L 95 -60 L 95 35 Q 95 105 0 135 Q -95 105 -95 35 L -95 -60 Z"
+          fill="none" stroke="#00f0ff" stroke-width="6" opacity="0.6" filter="url(#neonGlowCyan)" />
+
+    <!-- Chrome Outer Shield Border -->
+    <path d="M 0 -110 L 90 -55 L 90 35 Q 90 100 0 130 Q -90 100 -90 35 L -90 -55 Z"
+          fill="url(#shieldInnerDark)" stroke="url(#shieldChromeBorder)" stroke-width="7" stroke-linejoin="round" />
+
+    <!-- Inner Shield Inset -->
+    <path d="M 0 -95 L 75 -48 L 75 30 Q 75 85 0 112 Q -75 85 -75 30 L -75 -48 Z"
+          fill="#070c18" stroke="#00f0ff" stroke-width="2" stroke-opacity="0.5" />
+
+    <!-- Circuit Board Micro-traces in Crest Background -->
+    <g stroke="#0284c7" stroke-width="1.5" opacity="0.6" fill="none">
+      <path d="M -50 -20 L -25 -20 L -15 -5 L 0 -5" />
+      <circle cx="-50" cy="-20" r="2.5" fill="#38bdf8" />
+      <path d="M 50 -20 L 25 -20 L 15 -5 L 0 -5" />
+      <circle cx="50" cy="-20" r="2.5" fill="#38bdf8" />
+      <path d="M -40 40 L -20 40 L 0 65" />
+      <circle cx="-40" cy="40" r="2.5" fill="#38bdf8" />
+      <path d="M 40 40 L 20 40 L 0 65" />
+      <circle cx="40" cy="40" r="2.5" fill="#38bdf8" />
+      <line x1="0" y1="-80" x2="0" y2="-50" stroke="#00f0ff" stroke-width="2" />
+      <circle cx="0" cy="-50" r="3" fill="#00f0ff" />
     </g>
 
-    <!-- Right Side Extended Circuit Traces -->
-    <g stroke="#334155" stroke-width="3" fill="none" opacity="0.8">
-      <path d="M 790,220 L 890,220 L 940,170 L 1080,170 L 1120,210 L 1180,210" />
-      <path d="M 790,260 L 880,260 L 920,310 L 1020,310 L 1060,260 L 1140,260 L 1160,280 L 1190,280" />
-      <path d="M 790,300 L 860,300 L 900,250 L 1000,250 L 1030,220 L 1120,220" />
-      <path d="M 790,340 L 890,340 L 930,390 L 1040,390 L 1080,340 L 1160,340" />
-      <path d="M 790,380 L 870,380 L 910,330 L 1010,330 L 1040,360 L 1140,360" />
+    <!-- Glowing Red/Crimson Outer Play Frame -->
+    <polygon points="-42,-65 65,0 -42,65" fill="url(#crimsonPlayGrad)" stroke="#ff4d4d" stroke-width="3" filter="url(#neonGlowRed)" />
 
-      <circle cx="940" cy="170" r="4.5" fill="#475569" />
-      <circle cx="1080" cy="170" r="4.5" fill="#475569" />
-      <circle cx="1120" cy="210" r="4.5" fill="#38bdf8" />
-      <circle cx="920" cy="310" r="4.5" fill="#475569" />
-      <circle cx="1060" cy="260" r="4.5" fill="#475569" />
-      <circle cx="900" cy="250" r="4.5" fill="#38bdf8" />
-      <circle cx="1030" cy="220" r="4.5" fill="#475569" />
-      <circle cx="930" cy="390" r="4.5" fill="#475569" />
-      <circle cx="1080" cy="340" r="4.5" fill="#38bdf8" />
+    <!-- Silver Core Play Triangle -->
+    <polygon points="-32,-48 50,0 -32,48" fill="url(#silverArrow)" stroke="#ffffff" stroke-width="1.5" />
+
+    <!-- Center Play Gloss Highlight -->
+    <polygon points="-30,-45 0,-25 -30,0" fill="#ffffff" opacity="0.4" />
+  </g>
+
+  <!-- ==================== TYPOGRAPHY SECTION ==================== -->
+  <g transform="translate(320, 0)">
+    <!-- Top Cyber Subheader Pill -->
+    <g transform="translate(0, 68)">
+      <rect x="0" y="0" width="310" height="28" rx="6" fill="#0284c7" fill-opacity="0.18" stroke="#38bdf8" stroke-width="1.5" />
+      <circle cx="16" cy="14" r="4" fill="#00f0ff" filter="url(#neonGlowCyan)" />
+      <text x="32" y="19" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="12" fill="#38bdf8" letter-spacing="3.5">
+        PLAYTHROUGH STUDIO
+      </text>
     </g>
 
-    <!-- Central Shield -->
-    <g>
-      <!-- Shield Outer Bevel -->
-      <path d="M 600,20 C 740,20 765,90 765,180 C 765,330 660,430 600,460 C 540,430 435,330 435,180 C 435,90 460,20 600,20 Z"
-            fill="url(#shieldFill)" stroke="url(#shieldBorder)" stroke-width="10" stroke-linejoin="round" />
+    <!-- Main Title 1: DIGITAL (Cyan Glow) -->
+    <text x="0" y="165" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="950" font-size="82" fill="url(#cyanCyberGrad)" letter-spacing="2" filter="url(#hardShadow)">
+      DIGITAL
+    </text>
 
-      <!-- Shield Inner Bevel Inset -->
-      <path d="M 600,38 C 722,38 744,100 744,180 C 744,315 650,408 600,435 C 550,408 456,315 456,180 C 456,100 478,38 600,38 Z"
-            fill="none" stroke="#0f172a" stroke-width="5" opacity="0.85" />
+    <!-- Main Title 2: PLAY (Silver / White High Chrome) -->
+    <text x="390" y="165" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="950" font-size="82" fill="url(#chromeTitleGrad)" letter-spacing="2" filter="url(#hardShadow)">
+      PLAY
+    </text>
 
-      <!-- Shield Internal Circuit Paths -->
-      <g stroke="#38bdf8" stroke-width="1.8" opacity="0.4" fill="none">
-        <path d="M 600,45 L 600,130" />
-        <path d="M 505,100 L 505,160 L 540,200" />
-        <path d="M 695,100 L 695,160 L 660,200" />
-        <path d="M 530,290 L 565,340 L 600,340" />
-        <path d="M 670,290 L 635,340 L 600,340" />
+    <!-- Main Title 3: GRID (Crimson / Violet Accent) -->
+    <text x="660" y="165" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="950" font-size="82" fill="url(#crimsonPlayGrad)" letter-spacing="2" filter="url(#hardShadow)">
+      GRID
+    </text>
+
+    <!-- Bottom Futuristic Divider Line with Diamond Center -->
+    <g transform="translate(0, 195)">
+      <line x1="0" y1="0" x2="980" y2="0" stroke="url(#cyanCyberGrad)" stroke-width="2.5" />
+      <line x1="0" y1="4" x2="980" y2="4" stroke="#38bdf8" stroke-width="0.8" opacity="0.5" stroke-dasharray="12 6" />
+      <polygon points="490,-6 498,0 490,6 482,0" fill="#00f0ff" filter="url(#neonGlowCyan)" />
+    </g>
+
+    <!-- Secondary Subtitle: YOUTUBE PLAYTHROUGH PLANNER & PRODUCTION SUITE -->
+    <g transform="translate(0, 245)">
+      <text x="0" y="0" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#f8fafc" letter-spacing="6">
+        PLAYTHROUGH PLANNER
+      </text>
+      
+      <text x="440" y="0" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="18" fill="#94a3b8" letter-spacing="3">
+        • YOUTUBE CREATOR STUDIO
+      </text>
+    </g>
+
+    <!-- Status Badges / Feature Tags -->
+    <g transform="translate(0, 280)">
+      <!-- Badge 1: 4K / 60FPS READY -->
+      <g transform="translate(0, 0)">
+        <rect width="130" height="26" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+        <text x="65" y="17" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="11" fill="#38bdf8" text-anchor="middle" letter-spacing="1.5">
+          EPISODE HUB
+        </text>
       </g>
 
-      <!-- YouTube Play Button Box -->
-      <g transform="translate(465, 130)">
-        <!-- Outer Red Bezel Frame -->
-        <rect x="0" y="0" width="270" height="175" rx="42" fill="url(#redFrameGrad)" stroke="#fca5a5" stroke-width="3" />
-        <!-- Inner Dark Blue Glow Fill -->
-        <rect x="10" y="10" width="250" height="155" rx="32" fill="url(#blueCircuitBg)" stroke="#0284c7" stroke-width="2.5" />
+      <!-- Badge 2: SEO OPTIMIZED -->
+      <g transform="translate(142, 0)">
+        <rect width="145" height="26" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+        <text x="72" y="17" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="11" fill="#a855f7" text-anchor="middle" letter-spacing="1.5">
+          SEO GENERATOR
+        </text>
+      </g>
 
-        <!-- Glowing Blue Circuit Board Overlay inside Play Button -->
-        <g stroke="#38bdf8" stroke-width="2.5" fill="none">
-          <path d="M 30,40 L 60,40 L 85,65 L 85,100" />
-          <path d="M 240,40 L 210,40 L 185,65 L 185,100" />
-          <path d="M 35,135 L 70,135 L 95,110 L 120,110" />
-          <path d="M 235,135 L 200,135 L 175,110 L 150,110" />
+      <!-- Badge 3: 1280x720 THUMBNAILS -->
+      <g transform="translate(299, 0)">
+        <rect width="165" height="26" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+        <text x="82" y="17" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="11" fill="#f43f5e" text-anchor="middle" letter-spacing="1.5">
+          THUMBNAIL STUDIO
+        </text>
+      </g>
 
-          <circle cx="60" cy="40" r="3.5" fill="#38bdf8" />
-          <circle cx="210" cy="40" r="3.5" fill="#38bdf8" />
-          <circle cx="70" cy="135" r="3.5" fill="#38bdf8" />
-          <circle cx="200" cy="135" r="3.5" fill="#38bdf8" />
-        </g>
-
-        <!-- Center Metallic Silver Play Triangle -->
-        <polygon points="112,55 178,87.5 112,120" fill="url(#silverPlay)" stroke="#ffffff" stroke-width="3" stroke-linejoin="round" />
+      <!-- Badge 4: MULTI-SERIES WORKFLOW -->
+      <g transform="translate(476, 0)">
+        <rect width="175" height="26" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+        <text x="87" y="17" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="11" fill="#10b981" text-anchor="middle" letter-spacing="1.5">
+          SERIES SYNC CLOUD
+        </text>
       </g>
     </g>
   </g>

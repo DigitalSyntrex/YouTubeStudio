@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   User,
   Settings,
@@ -21,6 +21,7 @@ import { useAuth } from "../context/AuthContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useAdmin } from "../context/AdminContext";
 import { PlaythroughSeries } from "../types";
+import { DEFAULT_CREATOR_AVATARS } from "../data/defaultAvatars";
 
 interface UserDashboardHeaderProps {
   seriesList: PlaythroughSeries[];
@@ -38,6 +39,7 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
   const { userProfile, logout } = useAuth();
   const { entitlement } = useSubscription();
   const { isAdmin } = useAdmin();
+  const [imgError, setImgError] = useState(false);
 
   const totalEpisodes = seriesList.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
   const totalCompleted = seriesList.reduce(
@@ -47,6 +49,9 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
     0
   );
   const completionRate = totalEpisodes > 0 ? Math.round((totalCompleted / totalEpisodes) * 100) : 0;
+
+  const defaultAvatar = DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png";
+  const avatarSrc = (!imgError && userProfile?.avatarUrl) ? userProfile.avatarUrl : defaultAvatar;
 
   return (
     <div className="bg-gradient-to-r from-[#0d1222] via-[#090c17] to-[#0d111d] border-b border-blue-500/20 text-zinc-100 py-3.5 px-4 sm:px-6 lg:px-8 shadow-xl relative z-30">
@@ -59,11 +64,14 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
         >
           <div className="relative">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/40 group-hover:border-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-900/40 transition-all">
-              {userProfile?.avatarUrl ? (
-                <img src={userProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span>{(userProfile?.displayName || userProfile?.username || "U").slice(0, 2).toUpperCase()}</span>
-              )}
+              <img
+                src={avatarSrc}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+                onError={() => {
+                  setImgError(true);
+                }}
+              />
             </div>
             <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-[#090c17]" title="Online - Cloud Sync Active" />
           </div>
