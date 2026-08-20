@@ -321,9 +321,9 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-[#121212] border border-white/10 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh]">
+      <div className="bg-[#1c273e] border border-blue-500/30 w-full max-w-5xl rounded-2xl shadow-2xl shadow-blue-950/80 overflow-hidden my-8 flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="p-5 bg-[#09090b] border-b border-white/10 flex items-center justify-between">
+        <div className="p-5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="font-mono text-sm font-bold text-blue-400 bg-blue-500/10 px-3 py-1 rounded-md border border-blue-500/20">
               EP {episode.partNumber < 10 ? `0${episode.partNumber}` : episode.partNumber}
@@ -352,7 +352,7 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
             </button>
             <button
               onClick={() => setIsMinimized(true)}
-              className="p-1.5 text-cyan-300 hover:text-cyan-100 bg-cyan-950/50 hover:bg-cyan-900/80 rounded-lg transition-colors border border-cyan-500/30 flex items-center gap-1 text-xs font-bold cursor-pointer"
+              className="p-1.5 text-cyan-300 hover:text-cyan-100 bg-[#141e30] hover:bg-cyan-900/80 rounded-lg transition-colors border border-blue-500/30 flex items-center gap-1 text-xs font-bold cursor-pointer"
               title="Minimize window to floating dock"
             >
               <Minimize2 className="w-4 h-4" />
@@ -360,7 +360,7 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 text-zinc-400 hover:text-white bg-[#18181b] hover:bg-[#27272a] rounded-lg transition-colors border border-white/10 cursor-pointer"
+              className="p-1.5 text-zinc-400 hover:text-white bg-[#141e30] hover:bg-white/10 rounded-lg transition-colors border border-blue-500/20 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -368,7 +368,7 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
         </div>
 
         {/* Tab Navigation Bar */}
-        <div className="flex border-b border-white/10 bg-[#09090b] px-4 sm:px-6 gap-2 overflow-x-auto overflow-y-visible py-2 min-h-[52px] scrollbar-thin">
+        <div className="flex border-b border-blue-500/20 bg-[#141e30] px-4 sm:px-6 gap-2 overflow-x-auto overflow-y-visible py-2 min-h-[52px] scrollbar-thin">
           {[
             { id: "package", label: "YouTube Package", icon: Youtube },
             { id: "gameplay", label: "Story & Pacing", icon: MapPin },
@@ -382,7 +382,7 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
-                    ? "border-amber-400/80 text-amber-300 bg-amber-500/15 shadow-sm"
+                    ? "border-blue-400 text-white bg-blue-600/40 shadow-sm"
                     : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 }`}
               >
@@ -394,7 +394,7 @@ ${(episode.tags || []).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`;
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-900/50">
+        <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-[#1c273e]">
           {appliedNotification && (
             <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2 animate-pulse">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />

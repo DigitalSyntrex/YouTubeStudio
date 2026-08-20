@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, Download, CheckCircle, Clock, BookOpen, Layers, Image, Type, Plus, Gamepad2, Trash2, AlertTriangle, Swords, UserCheck, Target, Cloud, FileJson, Upload, RefreshCw, ShieldCheck, HardDrive, Check, X, ChevronDown, GitBranch, Zap, TrendingUp, Mic, BarChart3, Wand2, Tv, Key, Smartphone, Palette, Printer, Home, LayoutGrid, Radio, Youtube, Sun, Moon, FolderKanban, Film, CheckCircle2, Settings, Trophy, Award, Database, Edit2, User } from "lucide-react";
+import { Play, Sparkles, Download, CheckCircle, Clock, BookOpen, Layers, Image, Type, Plus, Gamepad2, Trash2, AlertTriangle, Swords, UserCheck, Target, Cloud, FileJson, Upload, RefreshCw, ShieldCheck, HardDrive, Check, X, ChevronDown, GitBranch, Zap, TrendingUp, Mic, BarChart3, Wand2, Tv, Key, Smartphone, Palette, Printer, Home, LayoutGrid, Radio, Youtube, Sun, Moon, FolderKanban, Film, CheckCircle2, Settings, Trophy, Award, Database, Edit2, User, Info } from "lucide-react";
 import { Episode, PLAYTHROUGH_TYPES, PlaythroughSeries } from "../types";
 import { defaultPlaythroughSeries } from "../data/episodesData";
 import { MilestoneBellDropdown, MilestoneRecord } from "./MilestoneNotification";
@@ -42,6 +42,7 @@ interface HeaderProps {
   currentTheme?: AppThemeId;
   onSelectTheme?: (themeId: AppThemeId) => void;
   onOpenThemeSwitcher?: () => void;
+  onOpenAbout?: () => void;
 
   // 10 Studio Tools Upgrades Callbacks
   onOpenCtrPredictor?: () => void;
@@ -95,6 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentTheme = "midnight",
   onSelectTheme,
   onOpenThemeSwitcher,
+  onOpenAbout,
   milestoneHistory = [],
   onSelectMilestone,
   onClearMilestoneHistory,
@@ -420,7 +422,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Streamlined Playthrough Series Banner & Hero Metrics Ticker */}
-        <div className="bg-gradient-to-r from-blue-950/90 via-[#0d1326]/90 to-indigo-950/90 p-3 sm:p-4 rounded-2xl border border-blue-500/40 shadow-xl shadow-blue-950/40 space-y-3 backdrop-blur-xl">
+        <div className="bg-[#1c273e] p-3 sm:p-4 rounded-2xl border border-blue-500/40 shadow-xl shadow-blue-950/40 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex-1 min-w-[280px] space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1161,9 +1163,9 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Stats Grid & Target Duration Switcher - Auto-Fit Single Row */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 pt-4 border-t border-white/10">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 pt-4 border-t border-blue-500/20">
           {/* Game Synopsis Window - Expanded on Left Side (3/6 cols) */}
-          <div className="col-span-1 md:col-span-3 bg-[#09090b] p-3.5 rounded-xl border border-cyan-500/30 flex flex-col justify-between overflow-hidden shadow-md">
+          <div className="col-span-1 md:col-span-3 bg-[#1c273e] p-3.5 rounded-2xl border border-cyan-500/40 flex flex-col justify-between overflow-hidden shadow-lg shadow-blue-950/40">
             <div className="flex items-center justify-between text-xs text-zinc-400 mb-1 flex-wrap gap-1">
               <span className="flex items-center gap-1.5 font-bold text-cyan-300">
                 <BookOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
@@ -1252,42 +1254,48 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Shifted & Compacted Stats Windows on Right Side */}
-          <div className="bg-[#09090b] p-3 rounded-xl border border-white/10 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="text-[11px] font-medium text-zinc-400">Total Episodes</span>
-              <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+          <div className="bg-[#1c273e] p-3 rounded-2xl border border-blue-500/35 hover:border-blue-400/60 shadow-lg shadow-blue-950/40 flex flex-col justify-between transition-all group">
+            <div className="flex items-center justify-between text-xs text-zinc-300 mb-1">
+              <span className="text-[11px] font-bold text-blue-300">Total Episodes</span>
+              <div className="p-1 rounded-lg bg-blue-500/15 border border-blue-400/30 text-blue-400">
+                <Layers className="w-3.5 h-3.5 shrink-0" />
+              </div>
             </div>
             <div>
-              <div className="text-lg font-bold text-zinc-100">{totalEpisodes} Episodes</div>
-              <div className="text-[10px] text-zinc-400 mt-0.5">
+              <div className="text-lg font-black text-white">{totalEpisodes} Episodes</div>
+              <div className="text-[10px] text-blue-300/80 font-semibold mt-0.5">
                 100% Series Track
               </div>
             </div>
           </div>
 
-          <div className="bg-[#09090b] p-3 rounded-xl border border-white/10 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="text-[11px] font-medium text-zinc-400">Est. Total Playtime</span>
-              <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <div className="bg-[#1c273e] p-3 rounded-2xl border border-cyan-500/35 hover:border-cyan-400/60 shadow-lg shadow-blue-950/40 flex flex-col justify-between transition-all group">
+            <div className="flex items-center justify-between text-xs text-zinc-300 mb-1">
+              <span className="text-[11px] font-bold text-cyan-300">Est. Total Playtime</span>
+              <div className="p-1 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-400">
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+              </div>
             </div>
             <div>
-              <div className="text-lg font-bold text-zinc-100">~{totalHours} Hours</div>
-              <div className="text-[10px] text-zinc-400 mt-0.5 truncate">
+              <div className="text-lg font-black text-white">~{totalHours} Hours</div>
+              <div className="text-[10px] text-cyan-300/80 font-semibold mt-0.5 truncate">
                 Avg {totalEpisodes > 0 ? Math.round(totalEstMinutes / totalEpisodes) : 0}m / ep
               </div>
             </div>
           </div>
 
-          <div className="bg-[#09090b] p-3 rounded-xl border border-white/10 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="text-[11px] font-medium text-zinc-400">Published / Ready</span>
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="bg-[#1c273e] p-3 rounded-2xl border border-emerald-500/35 hover:border-emerald-400/60 shadow-lg shadow-blue-950/40 flex flex-col justify-between transition-all group">
+            <div className="flex items-center justify-between text-xs text-zinc-300 mb-1">
+              <span className="text-[11px] font-bold text-emerald-300">Published / Ready</span>
+              <div className="p-1 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-400">
+                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+              </div>
             </div>
             <div>
-              <div className="text-lg font-bold text-zinc-100">
+              <div className="text-lg font-black text-white">
                 {publishedCount} / {totalEpisodes}
               </div>
-              <div className="text-[10px] text-emerald-400 mt-0.5 truncate">
+              <div className="text-[10px] text-emerald-300 font-semibold mt-0.5 truncate">
                 {readyCount} edited/ready
               </div>
             </div>

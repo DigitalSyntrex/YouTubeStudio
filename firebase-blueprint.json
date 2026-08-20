@@ -145,6 +145,26 @@
         "updatedAt": { "type": "string", "description": "ISO update timestamp" }
       },
       "required": ["id", "userId", "gameTitle", "episodes", "createdAt"]
+    },
+    "contact_messages": {
+      "title": "ContactMessage",
+      "description": "In-app contact messages, feedback, and support inquiries",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Message unique identifier" },
+        "name": { "type": "string", "description": "Sender full or display name" },
+        "email": { "type": "string", "description": "Sender email address" },
+        "subject": { "type": "string", "description": "Inquiry subject" },
+        "message": { "type": "string", "description": "Message content body" },
+        "topic": { "type": "string", "enum": ["feedback", "feature", "bug", "help", "general"], "description": "Category topic" },
+        "userId": { "type": "string", "description": "Sender Firebase Auth UID if authenticated" },
+        "userEmail": { "type": "string", "description": "Sender authenticated email if available" },
+        "status": { "type": "string", "enum": ["unread", "read", "in_progress", "resolved", "archived"], "description": "Inbox resolution status" },
+        "adminNotes": { "type": "string", "description": "Internal notes added by admin" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["id", "name", "email", "subject", "message", "status", "createdAt"]
     }
   }
 }

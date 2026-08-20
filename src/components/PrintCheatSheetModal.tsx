@@ -20,6 +20,8 @@ import {
   Compass
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 
 interface PrintCheatSheetModalProps {
   series?: PlaythroughSeries;
@@ -187,21 +189,21 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
         }
       `}</style>
 
-      <div className="bg-[#121212] border border-white/10 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden my-4 max-h-[92vh] flex flex-col">
+      <div className="bg-[#1c273e] border border-blue-500/35 w-full max-w-5xl rounded-2xl shadow-2xl shadow-blue-950/60 overflow-hidden my-4 max-h-[92vh] flex flex-col">
         {/* Header Bar (Hidden during print) */}
-        <div className="no-print p-4 sm:p-5 bg-[#09090b] border-b border-white/10 flex items-center justify-between gap-3">
+        <div className="no-print p-4 sm:p-5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-              <Printer className="w-5 h-5 text-amber-400" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0 shadow-sm">
+              <Printer className="w-5 h-5 text-amber-300" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                 <span>Series Breakdown & Roadmap Document</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30">
                   PDF & Print Ready
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-blue-200/80">
                 Export full episode walkthrough, milestone roadmap & production checklist formatted for printing or PDF sharing
               </p>
             </div>
@@ -363,13 +365,10 @@ export const PrintCheatSheetModal: React.FC<PrintCheatSheetModalProps> = ({
               <div className="flex items-center gap-3">
                 {/* Creator Avatar */}
                 <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-300 flex items-center justify-center text-zinc-100 font-bold text-sm shrink-0">
-                  <img
-                    src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                  <RobustAvatarImg
+                    src={resolveAvatarUrl(userProfile?.avatarUrl)}
                     alt="Creator"
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                    }}
                   />
                 </div>
                 <div>

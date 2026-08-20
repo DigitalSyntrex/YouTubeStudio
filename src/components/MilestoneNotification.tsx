@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { PlaythroughSeries, Episode } from "../types";
 import { useAuth } from "../context/AuthContext";
+import { resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 
 export type MilestonePercent = 25 | 50 | 75 | 100;
 
@@ -168,13 +170,10 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationModalProps>
                 </div>
                 {/* Creator Avatar Badge Overlay */}
                 <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white/80 bg-zinc-950 overflow-hidden shadow-lg flex items-center justify-center">
-                  <img
-                    src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                  <RobustAvatarImg
+                    src={resolveAvatarUrl(userProfile?.avatarUrl)}
                     alt="Creator"
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                    }}
                   />
                 </div>
               </div>
@@ -453,7 +452,7 @@ export const MilestoneTrackerBar: React.FC<MilestoneTrackerBarProps> = ({
   const neededEpForNext = Math.ceil((nextMilestone / 100) * total) - completed;
 
   return (
-    <div className="bg-[#09090b]/90 border border-amber-500/25 rounded-xl p-2.5 sm:p-3 shadow-lg space-y-2">
+    <div className="bg-[#141e30] border border-blue-500/35 rounded-xl p-2.5 sm:p-3 shadow-lg shadow-blue-950/40 space-y-2">
       {/* Header Row */}
       <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
         <div className="flex items-center gap-2 min-w-0">

@@ -33,20 +33,23 @@ import {
   Unlock,
   Eye,
   Server,
-  Gift
+  Gift,
+  Mail,
+  Inbox
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { useAuth } from "../context/AuthContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { PlanTier, ProductKey } from "../types";
 import { ProductKeyVaultCenter } from "./ProductKeyVaultCenter";
+import { AdminInboxTab } from "./AdminInboxTab";
 
 interface AdminControlModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type AdminTab = "vault" | "users" | "site_controls" | "audit_logs";
+type AdminTab = "vault" | "users" | "inbox" | "site_controls" | "audit_logs";
 
 export const AdminControlModal: React.FC<AdminControlModalProps> = ({
   isOpen,
@@ -71,6 +74,7 @@ export const AdminControlModal: React.FC<AdminControlModalProps> = ({
     refreshAdminUsers,
     addAdminUser,
     removeAdminUser,
+    unreadMessagesCount,
   } = useAdmin();
 
   const { currentUser, userProfile } = useAuth();
@@ -433,6 +437,24 @@ export const AdminControlModal: React.FC<AdminControlModalProps> = ({
           >
             <Users className="w-4 h-4 text-indigo-300" />
             <span>User Subscriptions & Entitlements</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("inbox")}
+            className={`px-4 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === "inbox"
+                ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white shadow-md shadow-blue-600/40 border border-blue-400/50"
+                : "text-blue-200/70 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <Mail className="w-4 h-4 text-cyan-300" />
+            <span>Messages & Inbox</span>
+            {unreadMessagesCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-cyan-400 text-zinc-950">
+                {unreadMessagesCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -1002,6 +1024,9 @@ export const AdminControlModal: React.FC<AdminControlModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* TAB: IN-APP CONTACT & FEEDBACK INBOX */}
+          {activeTab === "inbox" && <AdminInboxTab />}
 
           {/* TAB 3: WEBSITE & STUDIO CONTROLS */}
           {activeTab === "site_controls" && (

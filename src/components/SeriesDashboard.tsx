@@ -425,14 +425,14 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
     undefeatedMissableBosses.filter((b) => b.episodePart === currentUpNextEpNum).length;
 
   return (
-    <section className="bg-gradient-to-b from-[#0e1738] via-[#091129] to-[#050a1b] border border-blue-500/35 border-t-blue-400/40 rounded-3xl overflow-hidden shadow-2xl shadow-blue-950/60 relative ring-1 ring-blue-500/20 transition-all duration-300">
+    <section className="bg-[#1c273e] border border-blue-500/35 border-t-blue-400/40 rounded-3xl overflow-hidden shadow-2xl shadow-blue-950/60 relative ring-1 ring-blue-500/20 transition-all duration-300">
       {/* Background Glows & Subtle Grid Depth */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Window Header Bar with Minimize & Expand */}
-      <div className="px-4 py-2.5 bg-[#091024]/90 border-b border-blue-500/30 flex items-center justify-between gap-3 relative z-10 backdrop-blur-md">
+      <div className="px-4 py-2.5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-3 relative z-10 backdrop-blur-md">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <div className="flex items-center gap-1.5 text-blue-400 font-extrabold text-xs uppercase tracking-wider shrink-0">
             <Zap className="w-4 h-4 text-blue-400 fill-blue-400" />
@@ -473,7 +473,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
       {!isDashboardMinimized && (
         <div className="p-3.5 sm:p-4 space-y-3.5 relative z-10">
           {/* Creator Dashboard Header & Series Selector Floating Header Bar */}
-          <div className="bg-[#091024]/90 border border-blue-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+          <div className="bg-[#141e30] border border-blue-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-2.5 flex-wrap min-w-0">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-xs font-black tracking-wider uppercase shadow-sm">
                 <Zap className="w-3.5 h-3.5 text-blue-400 fill-blue-400" />
@@ -514,7 +514,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                 <select
                   value={activeSeries?.id}
                   onChange={(e) => onSelectSeries(e.target.value)}
-                  className="bg-[#121622] border border-blue-500/40 hover:border-blue-400 focus:border-blue-300 rounded-lg px-2.5 py-1.5 text-xs font-extrabold text-white focus:outline-none transition-all cursor-pointer shadow-md"
+                  className="bg-[#162136] border border-blue-500/40 hover:border-blue-400 focus:border-blue-300 rounded-lg px-2.5 py-1.5 text-xs font-extrabold text-white focus:outline-none transition-all cursor-pointer shadow-md"
                 >
                   {[...seriesList]
                     .sort((a, b) => (a?.gameTitle || "").localeCompare(b?.gameTitle || ""))
@@ -566,9 +566,9 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
           {/* Main Grid: Overall Completion Percentage & Runtime Analytics */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
             {/* Left Card: Overall Series Completion Percentage (5 Cols) */}
-            <div className="lg:col-span-5 bg-[#0b0e17] border border-white/10 rounded-xl overflow-hidden shadow-md flex flex-col justify-between transition-all">
+            <div className="lg:col-span-5 bg-[#1c273e] border border-blue-500/35 rounded-xl overflow-hidden shadow-md flex flex-col justify-between transition-all">
               {/* Floating Header Bar */}
-              <div className="px-3.5 py-2 bg-[#080b12] border-b border-white/10 flex items-center justify-between gap-2">
+              <div className="px-3.5 py-2 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-2">
                 <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
                   <PieChart className="w-3.5 h-3.5 text-blue-400" />
                   <span>Overall Series Completion</span>
@@ -581,7 +581,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
               {/* Card Body */}
               <div className="p-3.5 space-y-3">
                 {/* Circular / Badge Percentage Meter */}
-                <div className="flex items-center gap-4 bg-[#070911] p-3 rounded-xl border border-white/5 shadow-inner">
+                <div className="flex items-center gap-4 bg-[#141e30] p-3 rounded-xl border border-blue-500/20 shadow-inner">
                   <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                     <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_6px_rgba(59,130,246,0.3)]" viewBox="0 0 36 36">
                       <path
@@ -630,7 +630,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
 
                 {/* Runtime Breakdown Specs */}
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="bg-[#070911] p-2.5 rounded-xl border border-white/5 space-y-0.5">
+                  <div className="bg-[#141e30] p-2.5 rounded-xl border border-blue-500/20 space-y-0.5">
                     <span className="text-[9px] font-bold uppercase text-zinc-400 flex items-center gap-1">
                       <Clock className="w-3 h-3 text-blue-400" />
                       <span>Total Planned</span>
@@ -639,7 +639,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                     <div className="text-[9px] text-zinc-500">{totalEpisodes} episodes total</div>
                   </div>
 
-                  <div className="bg-[#070911] p-2.5 rounded-xl border border-white/5 space-y-0.5">
+                  <div className="bg-[#141e30] p-2.5 rounded-xl border border-blue-500/20 space-y-0.5">
                     <span className="text-[9px] font-bold uppercase text-zinc-400 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                       <span>Completed</span>
@@ -652,9 +652,9 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
             </div>
 
             {/* Right Card: Episodes by Status Breakdown (7 Cols) */}
-            <div className="lg:col-span-7 bg-[#0b0e17] border border-white/10 rounded-xl overflow-hidden shadow-md flex flex-col justify-between transition-all">
+            <div className="lg:col-span-7 bg-[#1c273e] border border-blue-500/35 rounded-xl overflow-hidden shadow-md flex flex-col justify-between transition-all">
               {/* Floating Header Bar */}
-              <div className="px-3.5 py-2 bg-[#080b12] border-b border-white/10 flex items-center justify-between gap-2">
+              <div className="px-3.5 py-2 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-2">
                 <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
                   <BarChart3 className="w-3.5 h-3.5 text-purple-400" />
                   <span>Episodes by Production Status</span>
@@ -726,7 +726,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                 </div>
 
                 {/* Production Pacing Summary Banner */}
-                <div className="bg-[#070911] p-2.5 rounded-xl border border-white/5 flex items-center gap-2 text-xs">
+                <div className="bg-[#141e30] p-2.5 rounded-xl border border-blue-500/20 flex items-center gap-2 text-xs">
                   <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span className="text-[11px] text-zinc-300 truncate">
                     Pacing Guide: Target ~{avgEpisodeMins} mins/episode for optimal watch time.
@@ -737,9 +737,9 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
           </div>
 
           {/* Upcoming Recording & Editing Tasks Queue Window */}
-          <div className="bg-[#0b0e17] border border-white/10 rounded-xl overflow-hidden shadow-md">
+          <div className="bg-[#1c273e] border border-blue-500/35 rounded-xl overflow-hidden shadow-md">
             {/* Floating Header Bar */}
-            <div className="px-3.5 py-2 bg-[#080b12] border-b border-white/10 flex items-center justify-between gap-2">
+            <div className="px-3.5 py-2 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-2">
               <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
                 <FolderKanban className="w-3.5 h-3.5 text-blue-400" />
                 <span>Production Pipeline Tasks Queue</span>
@@ -751,7 +751,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
             <div className="p-3.5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Card 1: Up Next to Record */}
-                <div className="bg-[#070911] border border-red-500/30 border-t-red-400/50 rounded-xl p-3 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-sm hover:border-red-500/50 transition-all">
+                <div className="bg-[#141e30] border border-red-500/30 border-t-red-400/50 rounded-xl p-3 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-sm hover:border-red-500/50 transition-all">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-[9px] font-extrabold uppercase shadow-sm">
@@ -797,7 +797,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                 </div>
 
                 {/* Card 2: Up Next to Edit */}
-                <div className="bg-[#070911] border border-amber-500/30 border-t-amber-400/50 rounded-xl p-3 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-sm hover:border-amber-500/50 transition-all">
+                <div className="bg-[#141e30] border border-amber-500/30 border-t-amber-400/50 rounded-xl p-3 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-sm hover:border-amber-500/50 transition-all">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[9px] font-extrabold uppercase shadow-sm">
@@ -843,7 +843,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                 </div>
 
                 {/* Card 3: Up Next to Publish */}
-                <div className="bg-[#070911] border border-emerald-500/30 border-t-emerald-400/50 rounded-xl p-3 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-sm hover:border-emerald-500/50 transition-all">
+                <div className="bg-[#141e30] border border-emerald-500/30 border-t-emerald-400/50 rounded-xl p-3 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-sm hover:border-emerald-500/50 transition-all">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-extrabold uppercase shadow-sm">
@@ -890,9 +890,9 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
           </div>
 
           {/* Missable Quests & Uncollected Loot High-Alert Radar Window */}
-          <div className="bg-[#0b0e17] border border-red-500/30 rounded-xl overflow-hidden shadow-md">
+          <div className="bg-[#1c273e] border border-red-500/30 rounded-xl overflow-hidden shadow-md">
             {/* Single Floating Header Bar with Action Buttons */}
-            <div className="px-3.5 py-2 bg-[#120e1d] border-b border-red-500/30 flex items-center justify-between gap-2 flex-wrap">
+            <div className="px-3.5 py-2 bg-[#162136] border-b border-red-500/30 flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
                 <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 animate-pulse" />
                 <h3 className="text-xs font-black text-white flex items-center gap-1.5 truncate">
@@ -939,7 +939,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                   </h4>
 
                   {missableQuests.length === 0 ? (
-                    <div className="bg-[#070911] p-3 rounded-lg border border-white/5 text-center text-xs text-zinc-400">
+                    <div className="bg-[#141e30] p-3 rounded-lg border border-blue-500/20 text-center text-xs text-zinc-400">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
                       No missable quests remaining for this series!
                     </div>
@@ -948,7 +948,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                       {missableQuests.map((q) => (
                         <div
                           key={q.id}
-                          className="bg-[#070911] hover:bg-[#0f1220] border border-purple-500/20 rounded-lg p-2.5 flex items-start justify-between gap-2 transition-all shadow-sm"
+                          className="bg-[#141e30] hover:bg-[#1a263d] border border-purple-500/20 rounded-lg p-2.5 flex items-start justify-between gap-2 transition-all shadow-sm"
                         >
                           <div className="space-y-0.5 flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -984,7 +984,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                   </h4>
 
                   {uncollectedMissableLoot.length === 0 ? (
-                    <div className="bg-[#070911] p-3 rounded-lg border border-white/5 text-center text-xs text-zinc-400">
+                    <div className="bg-[#141e30] p-3 rounded-lg border border-blue-500/20 text-center text-xs text-zinc-400">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
                       All missable loot & relics collected!
                     </div>
@@ -993,7 +993,7 @@ export const SeriesDashboard: React.FC<SeriesDashboardProps> = ({
                       {uncollectedMissableLoot.map((item) => (
                         <div
                           key={item.id}
-                          className="bg-[#070911] hover:bg-[#0f1220] border border-red-500/20 rounded-lg p-2.5 flex items-start justify-between gap-2 transition-all shadow-sm"
+                          className="bg-[#141e30] hover:bg-[#1a263d] border border-red-500/20 rounded-lg p-2.5 flex items-start justify-between gap-2 transition-all shadow-sm"
                         >
                           <div className="space-y-0.5 flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">

@@ -25,6 +25,8 @@ import {
   Zap
 } from "lucide-react";
 import { Achievement, AchievementCategory, AchievementRarity } from "../types";
+import { resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 import {
   loadAchievements,
   calculateGamerscore,
@@ -185,13 +187,10 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
             {/* Creator Avatar Chip */}
             <div className="flex items-center gap-2 bg-[#0d1527] px-2.5 py-1.5 rounded-xl border border-cyan-500/30 shadow-inner">
               <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-cyan-600 to-blue-600 border border-cyan-400/50 flex items-center justify-center text-white text-[10px] font-black shrink-0">
-                <img
-                  src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                <RobustAvatarImg
+                  src={resolveAvatarUrl(userProfile?.avatarUrl)}
                   alt="Creator"
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                  }}
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
               </div>

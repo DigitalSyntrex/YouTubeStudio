@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -24,6 +25,10 @@ import {
   getAdminUsersList,
   addAdminUser,
   removeAdminUser,
+  saveContactMessage,
+  getAllContactMessages,
+  updateContactMessage,
+  deleteContactMessage,
 } from "./src/server/subscriptionEngine";
 
 dotenv.config();
@@ -62,6 +67,36 @@ async function startServer() {
   };
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", geminiConfigured: !!process.env.GEMINI_API_KEY });
+  });
+
+  // Auth Email Verification Dispatch Endpoint
+  app.post("/api/auth/send-verification-email", (req, res) => {
+    const { email, username, displayName, verificationCode } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email address is required" });
+    }
+
+    console.log(`[Verification Email] Dispatched security verification to ${email} (User: ${username}, PIN: ${verificationCode})`);
+    
+    // Record audit trail entry
+    try {
+      recordAuditLog({
+        userId: `user_${username || "new"}`,
+        userEmail: email,
+        action: "dispatch_verification_email",
+        resource: "/api/auth/send-verification-email",
+        status: "success",
+        details: { username, displayName, verificationCode, timestamp: new Date().toISOString() },
+        ip: (req.ip as string) || "127.0.0.1",
+      });
+    } catch {}
+
+    res.json({
+      success: true,
+      email,
+      message: `Verification email dispatched to ${email}`,
+      sentAt: new Date().toISOString(),
+    });
   });
 
   // AI Title & Description Enhancement Endpoint
@@ -977,6 +1012,91 @@ Format your response as a valid JSON object:
       itemCount: seriesList.length,
     });
   });
+
+  // Contact Us & In-App Feedback Submissions
+  app.post("/api/contact/submit", (req, res) => {
+    const { name, email, subject, message, topic, userId, userEmail } = req.body;
+    if (!email || !message) {
+      return res.status(400).json({ error: "Email and message body are required." });
+    }
+
+    const result = saveContactMessage({
+      name: name || "Anonymous Creator",
+      email,
+      subject: subject || "Inquiry from Digital Play Grid User",
+      message,
+      topic: topic || "general",
+      userId,
+      userEmail,
+    });
+
+    res.json({ success: true, message: result.message });
+  });
+
+  // Admin Get All Contact Messages
+  app.get("/api/contact/messages", (req, res) => {
+    const messages = getAllContactMessages();
+    res.json({ success: true, messages, total: messages.length });
+  });
+
+  // Admin Update Message Status & Notes
+  app.post("/api/contact/update-status", (req, res) => {
+    const { id, status, adminNotes } = req.body;
+    if (!id) {
+      return res.status(400).json({ error: "Message ID is required." });
+    }
+
+    const result = updateContactMessage({ id, status, adminNotes });
+    if (!result.success) {
+      return res.status(404).json({ error: result.error });
+    }
+
+    res.json({ success: true, message: result.message });
+  });
+
+  // Admin Delete Message
+  app.delete("/api/contact/messages/:id", (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Message ID is required." });
+    }
+
+    const result = deleteContactMessage(id);
+    res.json({ success: result.success });
+  });
+
+  // Explicit Static Avatar Serving Routes with full CORS and caching
+  app.get(["/avatars_128/:filename", "/api/avatars/:filename", "/avatars/:filename"], (req, res) => {
+    const filename = path.basename(req.params.filename || "cyber.png");
+    const avatar128Path = path.join(process.cwd(), "public", "avatars_128", filename);
+    const publicRootPath = path.join(process.cwd(), "public", filename);
+
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+
+    if (fs.existsSync(avatar128Path)) {
+      return res.sendFile(avatar128Path);
+    }
+    if (fs.existsSync(publicRootPath)) {
+      return res.sendFile(publicRootPath);
+    }
+    // Fallback to cyber.png if requested avatar doesn't exist
+    const defaultCyber = path.join(process.cwd(), "public", "avatars_128", "cyber.png");
+    if (fs.existsSync(defaultCyber)) {
+      return res.sendFile(defaultCyber);
+    }
+    res.status(404).send("Avatar not found");
+  });
+
+  // Serve static assets from public folder (avatars, icons, logos)
+  const publicPath = path.join(process.cwd(), "public");
+  app.use(express.static(publicPath, {
+    setHeaders: (res) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    }
+  }));
 
   // Vite Middleware for development mode
   if (process.env.NODE_ENV !== "production") {

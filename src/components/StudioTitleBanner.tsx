@@ -46,11 +46,11 @@ export const StudioTitleBanner: React.FC<StudioTitleBannerProps> = ({
         {/* PLAYTHROUGH STUDIO LOGO */}
         <div className="flex justify-center py-0.5">
           <div className="relative group/logo w-full flex justify-center">
-            <div className="pt-1 pb-1.5 px-3 sm:px-5 bg-[#080d1a]/60 rounded-xl border-0 shadow-lg shadow-cyan-950/40 flex flex-col items-center justify-center backdrop-blur-md transition-all duration-300 w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl">
+            <div className="pt-0.5 pb-1 px-2.5 sm:px-4 bg-[#080d1a]/60 rounded-xl border-0 shadow-lg shadow-cyan-950/40 flex flex-col items-center justify-center backdrop-blur-md transition-all duration-300 w-full max-w-[280px] sm:max-w-xs md:max-w-sm">
               <img
                 src={logoSrc}
-                alt={config.studioName || "Playthrough Studio"}
-                className="w-full h-auto max-h-16 min-[400px]:max-h-20 sm:max-h-28 md:max-h-36 lg:max-h-44 xl:max-h-52 object-contain filter drop-shadow-[0_3px_12px_rgba(0,0,0,0.9)] transition-all duration-300"
+                alt={config.studioName || "Digital Play Grid"}
+                className="w-full h-auto max-h-8 min-[400px]:max-h-10 sm:max-h-14 md:max-h-18 lg:max-h-22 xl:max-h-26 object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-all duration-300"
               />
             </div>
           </div>

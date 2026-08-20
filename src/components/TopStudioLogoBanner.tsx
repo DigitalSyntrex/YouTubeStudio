@@ -12,16 +12,19 @@ export const TopStudioLogoBanner: React.FC = () => {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-30" />
 
       {/* Main Banner Row */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 md:py-4 flex items-center justify-center relative z-10">
-        <div className="flex items-center justify-center p-1 sm:p-2 select-none w-full max-w-[1100px]">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2 flex items-center justify-center relative z-10">
+        {/* Center: Brand Logo */}
+        <div className="flex items-center justify-center p-0.5 sm:p-1 select-none w-full max-w-[550px]">
           <img
             src={logoPng1}
             alt="Digital Play Grid - Playthrough Planner"
-            className="w-auto h-auto max-h-16 min-[400px]:max-h-20 sm:max-h-28 md:max-h-36 lg:max-h-44 xl:max-h-52 2xl:max-h-60 max-w-[95vw] sm:max-w-[88vw] md:max-w-[80vw] lg:max-w-[960px] xl:max-w-[1100px] object-contain filter drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)] drop-shadow-[0_0_18px_rgba(56,189,248,0.25)]"
+            className="w-auto h-auto max-h-8 min-[400px]:max-h-10 sm:max-h-14 md:max-h-18 lg:max-h-22 xl:max-h-26 2xl:max-h-28 max-w-[90vw] sm:max-w-[440px] md:max-w-[480px] lg:max-w-[520px] xl:max-w-[550px] object-contain filter drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_0_12px_rgba(56,189,248,0.2)]"
           />
         </div>
       </div>
     </div>
   );
 };
+
+
 

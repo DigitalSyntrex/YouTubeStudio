@@ -368,3 +368,35 @@ export interface GlobalSiteSettings {
   enableAiSeoGenerator: boolean;
 }
 
+export type ContactMessageTopic = "feedback" | "feature" | "bug" | "help" | "general";
+export type ContactMessageStatus = "unread" | "read" | "in_progress" | "resolved" | "archived";
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  topic: ContactMessageTopic;
+  userId?: string;
+  userEmail?: string;
+  status: ContactMessageStatus;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PendingEmailVerification {
+  username: string;
+  displayName: string;
+  email: string;
+  password?: string;
+  verificationCode: string;
+  expiresAt: number; // unix timestamp in ms
+  acknowledgedTerms: boolean;
+  acknowledgedEmailVerified: boolean;
+  isVerified: boolean;
+  sentAt: string;
+}
+
+

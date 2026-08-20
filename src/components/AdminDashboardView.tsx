@@ -36,12 +36,15 @@ import {
   ArrowRight,
   UserCheck,
   UserPlus,
+  Mail,
+  Inbox,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { useAuth } from "../context/AuthContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { PlanTier, ProductKey } from "../types";
 import { ProductKeyVaultCenter } from "./ProductKeyVaultCenter";
+import { AdminInboxTab } from "./AdminInboxTab";
 
 interface AdminDashboardViewProps {
   onNavigateToHub?: () => void;
@@ -49,7 +52,7 @@ interface AdminDashboardViewProps {
   onOpenNewSeriesModal?: () => void;
 }
 
-type AdminTab = "vault" | "users" | "site_controls" | "audit_logs";
+type AdminTab = "vault" | "users" | "inbox" | "site_controls" | "audit_logs";
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onNavigateToHub,
@@ -74,6 +77,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     refreshAdminUsers,
     addAdminUser,
     removeAdminUser,
+    unreadMessagesCount,
   } = useAdmin();
 
   const { currentUser, userProfile } = useAuth();
@@ -535,6 +539,24 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         >
           <Users className="w-4 h-4 text-indigo-300" />
           <span>User Subscriptions & Entitlements</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("inbox")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeTab === "inbox"
+              ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white shadow-lg shadow-blue-600/40 border border-blue-400/50"
+              : "bg-white/5 text-blue-200/70 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          <Mail className="w-4 h-4 text-cyan-300" />
+          <span>Messages & Inbox</span>
+          {unreadMessagesCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-cyan-400 text-zinc-950">
+              {unreadMessagesCount}
+            </span>
+          )}
         </button>
 
         <button
@@ -1133,6 +1155,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Tab: In-App Contact & Feedback Inbox */}
+      {activeTab === "inbox" && <AdminInboxTab />}
 
       {/* Tab 5: Global Site Controls & Announcements */}
       {activeTab === "site_controls" && (

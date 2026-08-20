@@ -216,10 +216,10 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
       {/* Main Card Container */}
       <div
         onClick={() => onSelect(episode)}
-        className={`relative overflow-hidden bg-[#0a1226] ${statusEffects.cardBorder} ${statusEffects.glowShadow} rounded-2xl p-3.5 transition-all duration-300 cursor-pointer flex flex-col justify-between flex-1 hover:-translate-y-1 space-y-2.5`}
+        className={`relative overflow-hidden bg-[#1c273e] ${statusEffects.cardBorder} ${statusEffects.glowShadow} rounded-2xl p-3.5 transition-all duration-300 cursor-pointer flex flex-col justify-between flex-1 hover:-translate-y-1 space-y-2.5`}
       >
         {/* Quick Intel Hover Overlay - neatly framed between top badges and bottom actions */}
-        <div className="absolute inset-x-1.5 top-[48px] bottom-[56px] bg-[#070e20]/98 backdrop-blur-2xl border border-amber-500/50 rounded-xl p-3 shadow-2xl flex flex-col justify-between transition-all duration-200 opacity-0 group-hover:opacity-100 pointer-events-none z-30">
+        <div className="absolute inset-x-1.5 top-[48px] bottom-[56px] bg-[#152033]/98 backdrop-blur-2xl border border-amber-500/50 rounded-xl p-3 shadow-2xl flex flex-col justify-between transition-all duration-200 opacity-0 group-hover:opacity-100 pointer-events-none z-30">
           <div className="space-y-2 overflow-y-auto max-h-full pr-1 custom-synopsis-scrollbar">
             <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
               <div className="flex items-center gap-1.5 text-xs font-black text-amber-300">
@@ -665,7 +665,7 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
         {/* BOTTOM FOOTER TOOLBAR */}
         <div
           onClick={(e) => e.stopPropagation()}
-          className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 relative z-40 bg-[#0a1226] pointer-events-auto"
+          className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 relative z-40 bg-transparent pointer-events-auto"
         >
           {/* LEFT: DURATION */}
           <div className="flex items-center gap-2 text-xs text-slate-300 font-semibold min-w-0">

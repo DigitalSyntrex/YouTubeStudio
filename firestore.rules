@@ -82,6 +82,20 @@ service cloud.firestore {
       allow create, update, delete: if isSignedIn();
     }
 
+    // In-App Contact & Feedback Messages
+    match /contact_messages/{messageId} {
+      // Any visitor or user can submit a message
+      allow create: if true;
+      // Admins can read, update status/notes, or delete; users can read their own messages
+      allow read: if isSignedIn() && (
+        request.auth.token.email in ['syntrex@gmail.com', 'digitalplaygrid@gmail.com', 'digitalsyntrex@gmail.com'] ||
+        (resource.data.userId != null && request.auth.uid == resource.data.userId)
+      );
+      allow update, delete: if isSignedIn() && (
+        request.auth.token.email in ['syntrex@gmail.com', 'digitalplaygrid@gmail.com', 'digitalsyntrex@gmail.com']
+      );
+    }
+
     // Global Default Deny
     match /{document=**} {
       allow read, write: if false;

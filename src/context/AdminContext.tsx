@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
-import { GlobalSiteSettings, ProductKey, PlanTier } from "../types";
+import { GlobalSiteSettings, ProductKey, PlanTier, ContactMessage, ContactMessageStatus } from "../types";
 import { ALL_PREGENERATED_KEYS } from "../data/productKeys";
+import {
+  fetchAllContactMessages,
+  updateMessageStatusInDb,
+  deleteMessageFromDb
+} from "../services/contactService";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db } from "../firebase";
 
 export interface AdminUser {
   id: string;
@@ -18,6 +25,8 @@ interface AdminStats {
   availableKeys: number;
   activeSubscriptions: number;
   totalAuditLogs: number;
+  totalMessages: number;
+  unreadMessages: number;
   timestamp: string;
 }
 
@@ -55,6 +64,13 @@ interface AdminContextType {
     role?: "super_admin" | "admin";
   }) => Promise<{ success: boolean; message: string }>;
   removeAdminUser: (email: string) => Promise<{ success: boolean; message: string }>;
+  // In-App Contact & Feedback Inbox
+  contactMessages: ContactMessage[];
+  unreadMessagesCount: number;
+  loadingMessages: boolean;
+  refreshContactMessages: () => Promise<void>;
+  markMessageStatus: (id: string, status: ContactMessageStatus, adminNotes?: string) => Promise<boolean>;
+  deleteContactMessage: (id: string) => Promise<boolean>;
 }
 
 const DEFAULT_SETTINGS: GlobalSiteSettings = {
@@ -130,6 +146,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [keysInventory, setKeysInventory] = useState<ProductKey[]>(ALL_PREGENERATED_KEYS);
   const [loadingKeys, setLoadingKeys] = useState<boolean>(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
+
+  // In-App Contact Messages state
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
 
   // Check if current user is an authorized admin
   const userEmail = (currentUser?.email || userProfile?.email || "").toLowerCase().trim();
@@ -340,10 +360,59 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const refreshContactMessages = async () => {
+    setLoadingMessages(true);
+    try {
+      const msgs = await fetchAllContactMessages();
+      setContactMessages(msgs);
+    } catch (e) {
+      console.warn("Failed to fetch contact messages", e);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const markMessageStatus = async (
+    id: string,
+    status: ContactMessageStatus,
+    adminNotes?: string
+  ): Promise<boolean> => {
+    try {
+      const success = await updateMessageStatusInDb(id, status, adminNotes);
+      if (success) {
+        setContactMessages((prev) =>
+          prev.map((m) =>
+            m.id === id ? { ...m, status, adminNotes: adminNotes ?? m.adminNotes, updatedAt: new Date().toISOString() } : m
+          )
+        );
+      }
+      return success;
+    } catch {
+      return false;
+    }
+  };
+
+  const deleteContactMessage = async (id: string): Promise<boolean> => {
+    try {
+      const success = await deleteMessageFromDb(id);
+      if (success) {
+        setContactMessages((prev) => prev.filter((m) => m.id !== id));
+      }
+      return success;
+    } catch {
+      return false;
+    }
+  };
+
+  const unreadMessagesCount = contactMessages.filter(
+    (m) => m.status === "unread" || !m.status
+  ).length;
+
   useEffect(() => {
     refreshKeys();
     refreshStats();
     refreshAdminUsers();
+    refreshContactMessages();
 
     // Listen for product key redemptions to instantly remove the key from vault
     const handleKeyRedeemed = (e: any) => {
@@ -357,8 +426,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     window.addEventListener("dpg_key_redeemed", handleKeyRedeemed);
+
+    // Optional Firestore live subscription for contact messages
+    let unsubscribeFirestore: (() => void) | null = null;
+    try {
+      const q = query(collection(db, "contact_messages"), orderBy("createdAt", "desc"));
+      unsubscribeFirestore = onSnapshot(
+        q,
+        (snapshot) => {
+          const list: ContactMessage[] = [];
+          snapshot.forEach((doc) => {
+            list.push(doc.data() as ContactMessage);
+          });
+          if (list.length > 0) {
+            setContactMessages(list);
+          }
+        },
+        (err) => {
+          // Handled gracefully if not authenticated yet
+          console.log("Firestore contact_messages onSnapshot listener:", err?.message || err);
+        }
+      );
+    } catch (e) {
+      console.warn("Could not attach onSnapshot to contact_messages", e);
+    }
+
     return () => {
       window.removeEventListener("dpg_key_redeemed", handleKeyRedeemed);
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
     };
   }, []);
 
@@ -478,6 +575,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         refreshAdminUsers,
         addAdminUser,
         removeAdminUser,
+        contactMessages,
+        unreadMessagesCount,
+        loadingMessages,
+        refreshContactMessages,
+        markMessageStatus,
+        deleteContactMessage,
       }}
     >
       {children}

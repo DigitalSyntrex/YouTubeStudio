@@ -96,38 +96,38 @@ export const ProtagonistDBModal: React.FC<ProtagonistDBModalProps> = ({ onClose 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#0f0f12] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-[#1c273e] border border-blue-500/35 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl shadow-blue-950/60 overflow-hidden">
         {/* Modal Header */}
-        <div className="p-5 border-b border-white/10 flex items-center justify-between bg-[#141419]">
+        <div className="p-5 border-b border-blue-500/30 flex items-center justify-between bg-[#162136]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 shadow-sm">
               <Database className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 Protagonist & Character Database
-                <span className="text-xs font-normal text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-normal text-purple-200 bg-purple-500/20 border border-purple-400/30 px-2 py-0.5 rounded-full">
                   {dbList.length} Games Mapped
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-blue-200/80">
                 Automatic character recognition engine for longform walkthrough titles, thumbnails & descriptions.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Top Control Bar: Test Lookup & Add Custom Button */}
-        <div className="p-4 border-b border-white/10 bg-[#121217] flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="p-4 border-b border-blue-500/20 bg-[#141e30] flex flex-col md:flex-row items-center justify-between gap-3">
           {/* Live Test Lookup Input */}
           <div className="w-full md:w-2/3 relative">
-            <div className="flex items-center bg-[#09090b] border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-purple-500/50">
+            <div className="flex items-center bg-[#080d1e] border border-blue-500/30 rounded-xl px-3 py-1.5 focus-within:border-purple-500/50">
               <Sparkles className="w-4 h-4 text-purple-400 mr-2 flex-shrink-0" />
               <input
                 type="text"

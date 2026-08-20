@@ -43,7 +43,8 @@ import { useAuth, UserProfile } from "../context/AuthContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { AppThemeId, THEME_CONFIGS } from "../utils/themeUtils";
 import { PlaythroughSeries, Episode, Achievement } from "../types";
-import { DEFAULT_CREATOR_AVATARS, CreatorAvatarPreset } from "../data/defaultAvatars";
+import { DEFAULT_CREATOR_AVATARS, CreatorAvatarPreset, resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 import {
   loadAchievements,
   calculateGamerscore,
@@ -236,13 +237,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           <div className="flex items-center gap-3.5">
             <div className="relative group">
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-700 border-2 border-blue-400/50 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-900/40">
-                <img
-                  src={avatarUrl || DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png"}
+                <RobustAvatarImg
+                  src={resolveAvatarUrl(avatarUrl)}
                   alt="Avatar"
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                  }}
                 />
               </div>
             </div>
@@ -785,127 +783,126 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           {activeTab === "profile" && (
             <div className="space-y-6">
               <form onSubmit={handleSave} className="space-y-5">
-              {/* Avatar Picker & Upload */}
-              <div className="p-4 bg-[#06080e] border border-white/10 rounded-2xl space-y-3">
-                <label className="block text-xs font-bold text-zinc-200 uppercase tracking-wider">
-                  Creator Avatar & Portrait
-                </label>
+                {/* Avatar Picker & Upload */}
+                <div className="p-4 bg-[#06080e] border border-white/10 rounded-2xl space-y-3">
+                  <label className="block text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                    Creator Avatar & Portrait
+                  </label>
 
-                <div className="flex items-center gap-4">
-                  <div className="relative group shrink-0">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-tr from-blue-900 to-indigo-900 border-2 border-blue-400/40 flex items-center justify-center text-white text-xl font-bold">
-                      <img
-                        src={avatarUrl || DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png"}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                        }}
-                      />
+                  <div className="flex items-center gap-4">
+                    <div className="relative group shrink-0">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-tr from-blue-900 to-indigo-900 border-2 border-blue-400/40 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-950/60">
+                        <RobustAvatarImg
+                          src={resolveAvatarUrl(avatarUrl)}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-2xl flex items-center justify-center text-white cursor-pointer transition-opacity">
+                        <Camera className="w-5 h-5" />
+                        <input type="file" accept="image/*" onChange={handleAvatarFile} className="hidden" />
+                      </label>
                     </div>
-                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-2xl flex items-center justify-center text-white cursor-pointer transition-opacity">
-                      <Camera className="w-5 h-5" />
-                      <input type="file" accept="image/*" onChange={handleAvatarFile} className="hidden" />
-                    </label>
-                  </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-zinc-300 mb-1 font-semibold">
-                      Upload from device or select a themed portrait preset below:
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-zinc-300 mb-1 font-semibold">
+                        Upload from device or select a themed portrait preset below:
+                      </div>
+                      <label className="inline-block px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30 text-xs font-bold hover:bg-blue-600/30 transition-colors cursor-pointer">
+                        Browse Image File
+                        <input type="file" accept="image/*" onChange={handleAvatarFile} className="hidden" />
+                      </label>
                     </div>
-                    <label className="inline-block px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30 text-xs font-bold hover:bg-blue-600/30 transition-colors cursor-pointer">
-                      Browse Image File
-                      <input type="file" accept="image/*" onChange={handleAvatarFile} className="hidden" />
-                    </label>
                   </div>
-                </div>
 
-                {/* Preset Avatars */}
-                <div className="pt-3 border-t border-white/10 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-wider">
-                        Select Default Creator Avatar ({(PRESET_AVATARS || []).length} available):
-                      </span>
+                  {/* Preset Avatars */}
+                  <div className="pt-3 border-t border-white/10 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-zinc-300 font-bold uppercase tracking-wider">
+                          Select Default Creator Avatar ({(PRESET_AVATARS || []).length} available):
+                        </span>
+                      </div>
+                      {avatarUrl && (
+                        <span className="text-[11px] text-cyan-300 font-bold bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md self-start sm:self-auto">
+                          Active: {(() => {
+                            const resolved = resolveAvatarUrl(avatarUrl);
+                            const matched = (PRESET_AVATARS || []).find((p) => p.url === resolved || p.url === avatarUrl || p.id === avatarUrl);
+                            return matched ? `${matched.name} • ${matched.role}` : "Custom Avatar";
+                          })()}
+                        </span>
+                      )}
                     </div>
-                    {avatarUrl && (PRESET_AVATARS || []).some((p) => p.url === avatarUrl) && (
-                      <span className="text-[11px] text-cyan-300 font-bold bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md self-start sm:self-auto">
-                        Active: {(PRESET_AVATARS || []).find((p) => p.url === avatarUrl)?.name} • {(PRESET_AVATARS || []).find((p) => p.url === avatarUrl)?.role}
-                      </span>
-                    )}
-                  </div>
 
-                  {/* Category Filter Chips */}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {[
-                      { id: "all", label: `All Avatars (${(PRESET_AVATARS || []).length})` },
-                      { id: "Gaming & Genres", label: `Gaming & Genres (${(PRESET_AVATARS || []).filter(p => p.category === "Gaming & Genres").length})` },
-                      { id: "Cyber & Heroes", label: `Cyber & Heroes (${(PRESET_AVATARS || []).filter(p => p.category === "Cyber & Heroes").length})` },
-                      { id: "Icons & Mythos", label: `Icons & Mythos (${(PRESET_AVATARS || []).filter(p => p.category === "Icons & Mythos").length})` },
-                      { id: "Gear & Tech", label: `Gear & Tech (${(PRESET_AVATARS || []).filter(p => p.category === "Gear & Tech").length})` },
-                    ].map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => setAvatarCategory(cat.id)}
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                          avatarCategory === cat.id
-                            ? "bg-blue-600/30 text-blue-300 border-blue-400/50 shadow-sm"
-                            : "bg-[#0c101d] text-zinc-400 border-white/10 hover:border-white/20 hover:text-zinc-200"
-                        }`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
+                    {/* Category Filter Chips */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[
+                        { id: "all", label: `All Avatars (${(PRESET_AVATARS || []).length})` },
+                        { id: "Gaming & Genres", label: `Gaming & Genres (${(PRESET_AVATARS || []).filter(p => p.category === "Gaming & Genres").length})` },
+                        { id: "Cyber & Heroes", label: `Cyber & Heroes (${(PRESET_AVATARS || []).filter(p => p.category === "Cyber & Heroes").length})` },
+                        { id: "Icons & Mythos", label: `Icons & Mythos (${(PRESET_AVATARS || []).filter(p => p.category === "Icons & Mythos").length})` },
+                        { id: "Gear & Tech", label: `Gear & Tech (${(PRESET_AVATARS || []).filter(p => p.category === "Gear & Tech").length})` },
+                      ].map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setAvatarCategory(cat.id)}
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                            avatarCategory === cat.id
+                              ? "bg-blue-600/30 text-blue-300 border-blue-400/50 shadow-sm"
+                              : "bg-[#0c101d] text-zinc-400 border-white/10 hover:border-white/20 hover:text-zinc-200"
+                          }`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
 
-                  {/* Avatars Grid */}
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[280px] overflow-y-auto pr-1 p-2 rounded-xl bg-black/40 border border-white/5 custom-synopsis-scrollbar">
-                    {(PRESET_AVATARS || [])
-                      .filter((p) => avatarCategory === "all" || p.category === avatarCategory)
-                      .map((preset) => {
-                        const isSelected = avatarUrl === preset.url;
-                        return (
-                          <button
-                            key={preset.id || preset.name}
-                            type="button"
-                            onClick={() => handleSelectPresetAvatar(preset.url)}
-                            className={`group p-1 rounded-xl border flex flex-col items-center gap-1 transition-all text-center cursor-pointer ${
-                              isSelected
-                                ? "border-blue-400 ring-2 ring-blue-500/50 bg-blue-500/25 shadow-md shadow-blue-500/20"
-                                : "border-white/10 hover:border-white/30 bg-[#0a0f1d]/60 hover:bg-[#0f172a]"
-                            }`}
-                            title={`${preset.name} • ${preset.role || "Avatar"}`}
-                          >
-                            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform bg-black/50">
-                              <img
-                                src={preset.url}
-                                alt={preset.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Fallback to public route if needed
-                                  (e.target as HTMLImageElement).src = `/avatars_128/${preset.id}.png`;
-                                }}
-                              />
-                              {isSelected && (
-                                <div className="absolute inset-0 bg-blue-500/40 flex items-center justify-center">
-                                  <Check className="w-4 h-4 text-white drop-shadow-md stroke-[3]" />
-                                </div>
-                              )}
-                            </div>
-                            <span
-                              className={`text-[9px] font-bold truncate max-w-full leading-tight ${
-                                isSelected ? "text-blue-300" : "text-zinc-400 group-hover:text-zinc-200"
+                    {/* Avatars Grid */}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[280px] overflow-y-auto pr-1 p-2 rounded-xl bg-black/40 border border-white/5 custom-synopsis-scrollbar">
+                      {(PRESET_AVATARS || [])
+                        .filter((p) => avatarCategory === "all" || p.category === avatarCategory)
+                        .map((preset) => {
+                          const resolvedUserAvatar = resolveAvatarUrl(avatarUrl);
+                          const isSelected = resolvedUserAvatar === preset.url || avatarUrl === preset.url || avatarUrl === preset.id;
+                          return (
+                            <button
+                              key={preset.id || preset.name}
+                              type="button"
+                              onClick={() => handleSelectPresetAvatar(preset.url)}
+                              className={`group p-1 rounded-xl border flex flex-col items-center gap-1 transition-all text-center cursor-pointer ${
+                                isSelected
+                                  ? "border-blue-400 ring-2 ring-blue-500/50 bg-blue-500/25 shadow-md shadow-blue-500/20"
+                                  : "border-white/10 hover:border-white/30 bg-[#0a0f1d]/60 hover:bg-[#0f172a]"
                               }`}
+                              title={`${preset.name} • ${preset.role || "Avatar"}`}
                             >
-                              {preset.name}
-                            </span>
-                          </button>
-                        );
-                      })}
+                              <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform bg-black/50">
+                                <RobustAvatarImg
+                                  src={preset.url}
+                                  presetId={preset.id}
+                                  alt={preset.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                {isSelected && (
+                                  <div className="absolute inset-0 bg-blue-500/40 flex items-center justify-center">
+                                    <Check className="w-4 h-4 text-white drop-shadow-md stroke-[3]" />
+                                  </div>
+                                )}
+                              </div>
+                              <span
+                                className={`text-[9px] font-bold truncate max-w-full leading-tight ${
+                                  isSelected ? "text-blue-300" : "text-zinc-400 group-hover:text-zinc-200"
+                                }`}
+                              >
+                                {preset.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {/* Form Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

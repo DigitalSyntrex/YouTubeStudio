@@ -25,6 +25,8 @@ import {
 import { Episode, PlaythroughSeries, QuestEntry, BossEntry, LootEntry } from "../types";
 import { getBossAndLootForSeries } from "../data/bossLootData";
 import { useAuth } from "../context/AuthContext";
+import { resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 
 interface CompletionDashboardModalProps {
   activeSeries?: PlaythroughSeries;
@@ -149,11 +151,11 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-[#0e0e11] border-2 border-emerald-500/50 rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col shadow-2xl shadow-emerald-950/80 overflow-hidden text-white font-sans">
+      <div className="bg-[#1c273e] border-2 border-blue-500/50 rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col shadow-2xl shadow-blue-950/80 overflow-hidden text-white font-sans">
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950/80 via-zinc-950 to-zinc-950 border-b border-emerald-500/30 flex items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center text-blue-400 shrink-0">
               <Trophy className="w-5 h-5 animate-bounce" />
             </div>
             <div>
@@ -173,15 +175,12 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
 
           <div className="flex items-center gap-2.5">
             {/* Creator Avatar Chip */}
-            <div className="flex items-center gap-2 bg-zinc-950/80 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 shadow-inner">
+            <div className="flex items-center gap-2 bg-[#141e30] px-2.5 py-1.5 rounded-xl border border-blue-500/30 shadow-inner">
               <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-emerald-600 to-teal-600 border border-emerald-400/50 flex items-center justify-center text-white text-[10px] font-black shrink-0">
-                <img
-                  src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                <RobustAvatarImg
+                  src={resolveAvatarUrl(userProfile?.avatarUrl)}
                   alt="Creator"
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                  }}
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
               </div>
@@ -204,7 +203,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
             </button>
             <button
               onClick={onClose}
-              className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-xl cursor-pointer transition-colors"
+              className="p-2 bg-[#141e30] hover:bg-white/10 text-zinc-400 hover:text-white rounded-xl cursor-pointer transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -212,10 +211,10 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
         </div>
 
         {/* Master Score Banner */}
-        <div className="p-4 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-b border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 bg-[#141e30] border-b border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 w-full sm:w-auto">
             {/* Circular Gauge */}
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center bg-zinc-900 rounded-full border-2 border-emerald-500/40 shadow-inner">
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center bg-[#162136] rounded-full border-2 border-emerald-500/40 shadow-inner">
               <div className="text-center">
                 <span className="text-lg sm:text-2xl font-black text-emerald-400 block leading-none">
                   {overallPercent}%
@@ -248,11 +247,11 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center bg-zinc-900 p-1 rounded-xl border border-zinc-800 shrink-0 w-full sm:w-auto justify-center">
+          <div className="flex items-center bg-[#162136] p-1 rounded-xl border border-blue-500/20 shrink-0 w-full sm:w-auto justify-center">
             <button
               onClick={() => setActiveTab("overview")}
               className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
-                activeTab === "overview" ? "bg-emerald-600 text-white shadow" : "text-zinc-400 hover:text-white"
+                activeTab === "overview" ? "bg-blue-600 text-white shadow" : "text-zinc-400 hover:text-white"
               }`}
             >
               Overview Breakdown
@@ -260,7 +259,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
             <button
               onClick={() => setActiveTab("episodes_matrix")}
               className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
-                activeTab === "episodes_matrix" ? "bg-emerald-600 text-white shadow" : "text-zinc-400 hover:text-white"
+                activeTab === "episodes_matrix" ? "bg-blue-600 text-white shadow" : "text-zinc-400 hover:text-white"
               }`}
             >
               100% Episode Matrix ({episodes.length})
@@ -268,7 +267,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
             <button
               onClick={() => setActiveTab("missables")}
               className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
-                activeTab === "missables" ? "bg-emerald-600 text-white shadow" : "text-zinc-400 hover:text-white"
+                activeTab === "missables" ? "bg-blue-600 text-white shadow" : "text-zinc-400 hover:text-white"
               }`}
             >
               Missable Items Guard ({pendingMissablesCount})
@@ -277,13 +276,13 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
         </div>
 
         {/* Tab Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-[#0b0b0e]">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-[#1c273e]">
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* 4 Pillars Breakdown Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Episodes Pillar */}
-                <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-3">
+                <div className="p-4 bg-[#141e30] border border-blue-500/20 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-zinc-400 uppercase">YouTube Episodes</span>
                     <span className="text-xs font-black text-cyan-400">{publishedEpisodes} / {totalEpisodes}</span>
@@ -298,7 +297,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
                 </div>
 
                 {/* Quests Pillar */}
-                <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-3">
+                <div className="p-4 bg-[#141e30] border border-blue-500/20 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-zinc-400 uppercase">Quests & Milestones</span>
                     <span className="text-xs font-black text-amber-400">{completedQuests} / {totalQuests}</span>
@@ -313,7 +312,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
                 </div>
 
                 {/* Boss Trophies Pillar */}
-                <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-3">
+                <div className="p-4 bg-[#141e30] border border-blue-500/20 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-zinc-400 uppercase">Boss Encounters</span>
                     <span className="text-xs font-black text-red-400">{defeatedBosses} / {totalBosses}</span>
@@ -328,7 +327,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
                 </div>
 
                 {/* Key Loot / Relics Pillar */}
-                <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-3">
+                <div className="p-4 bg-[#141e30] border border-blue-500/20 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-zinc-400 uppercase">Key Loot & Espers</span>
                     <span className="text-xs font-black text-emerald-400">{collectedLoot} / {totalLoot}</span>
@@ -344,14 +343,14 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
               </div>
 
               {/* Earned Creator Badges Showcase */}
-              <div className="p-5 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl space-y-4">
+              <div className="p-5 bg-[#141e30] border border-blue-500/20 rounded-2xl space-y-4">
                 <h4 className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-400" />
                   <span>Series Completion Achievements & Badges</span>
                 </h4>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${overallPercent >= 100 ? "bg-amber-500/10 border-amber-500/40 text-amber-300" : "bg-zinc-900/40 border-zinc-800 opacity-50"}`}>
+                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${overallPercent >= 100 ? "bg-amber-500/10 border-amber-500/40 text-amber-300" : "bg-[#162136] border-blue-500/20 opacity-50"}`}>
                     <Award className="w-6 h-6 text-amber-400 shrink-0" />
                     <div>
                       <span className="text-xs font-black block">100% Master</span>
@@ -359,7 +358,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${pendingMissablesCount === 0 ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-300" : "bg-zinc-900/40 border-zinc-800 opacity-50"}`}>
+                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${pendingMissablesCount === 0 ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-300" : "bg-[#162136] border-blue-500/20 opacity-50"}`}>
                     <Shield className="w-6 h-6 text-emerald-400 shrink-0" />
                     <div>
                       <span className="text-xs font-black block">Zero Missed</span>
@@ -367,7 +366,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${bossPercent >= 100 ? "bg-red-500/10 border-red-500/40 text-red-300" : "bg-zinc-900/40 border-zinc-800 opacity-50"}`}>
+                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${bossPercent >= 100 ? "bg-red-500/10 border-red-500/40 text-red-300" : "bg-[#162136] border-blue-500/20 opacity-50"}`}>
                     <Swords className="w-6 h-6 text-red-400 shrink-0" />
                     <div>
                       <span className="text-xs font-black block">Boss Conqueror</span>
@@ -375,7 +374,7 @@ export const CompletionDashboardModal: React.FC<CompletionDashboardModalProps> =
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${epPercent >= 100 ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300" : "bg-zinc-900/40 border-zinc-800 opacity-50"}`}>
+                  <div className={`p-3 rounded-xl border flex items-center gap-3 ${epPercent >= 100 ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300" : "bg-[#162136] border-blue-500/20 opacity-50"}`}>
                     <CheckCircle2 className="w-6 h-6 text-cyan-400 shrink-0" />
                     <div>
                       <span className="text-xs font-black block">Series Published</span>

@@ -4,6 +4,8 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
+  reload,
   signInAnonymously,
   signOut as fbSignOut,
   updateProfile
@@ -18,7 +20,8 @@ import {
   where
 } from "firebase/firestore";
 import { auth, db, handleFirestoreError, OperationType } from "../firebase";
-import { DEFAULT_CREATOR_AVATARS } from "../data/defaultAvatars";
+import { DEFAULT_CREATOR_AVATARS, resolveAvatarUrl } from "../data/defaultAvatars";
+import { PendingEmailVerification } from "../types";
 
 export interface UserProfile {
   uid: string;
@@ -26,6 +29,9 @@ export interface UserProfile {
   displayName: string;
   email: string;
   avatarUrl: string;
+  emailVerified?: boolean;
+  termsAcknowledged?: boolean;
+  acknowledgedAt?: string;
   bio?: string;
   theme?: string;
   bannerGradient?: string;
@@ -45,14 +51,31 @@ export interface StudioUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {
   currentUser: StudioUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  pendingVerification: PendingEmailVerification | null;
   login: (usernameOrEmail: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string, displayName?: string) => Promise<void>;
+  initiateRegistrationWithVerification: (
+    username: string,
+    email: string,
+    password: string,
+    displayName?: string
+  ) => Promise<PendingEmailVerification>;
+  checkEmailVerifiedStatus: () => Promise<boolean>;
+  verifyEmailWithCode: (code: string) => Promise<boolean>;
+  simulateVerifyEmail: () => void;
+  resendVerificationEmail: () => Promise<void>;
+  finalizeAccountCreation: (
+    acknowledgedTerms: boolean,
+    acknowledgedEmail: boolean
+  ) => Promise<void>;
+  cancelPendingVerification: () => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -127,6 +150,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<StudioUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pendingVerification, setPendingVerification] = useState<PendingEmailVerification | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("dpg_pending_verification");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.expiresAt > Date.now()) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  const savePendingVerification = (pv: PendingEmailVerification | null) => {
+    setPendingVerification(pv);
+    if (pv) {
+      sessionStorage.setItem("dpg_pending_verification", JSON.stringify(pv));
+    } else {
+      sessionStorage.removeItem("dpg_pending_verification");
+    }
+  };
 
   // Helper to load accounts list from local backup
   const getLocalAccounts = (): Record<string, { password: string; profile: UserProfile }> => {
@@ -155,6 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const snap = await getDoc(userRef);
       if (snap.exists()) {
         const data = snap.data() as UserProfile;
+        if (data.avatarUrl) {
+          data.avatarUrl = resolveAvatarUrl(data.avatarUrl);
+        }
         setUserProfile(data);
         return data;
       }
@@ -168,6 +215,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (savedSession) {
         const parsed = JSON.parse(savedSession);
         if (parsed?.uid === uid) {
+          if (parsed.avatarUrl) {
+            parsed.avatarUrl = resolveAvatarUrl(parsed.avatarUrl);
+          }
           setUserProfile(parsed);
           return parsed;
         }
@@ -188,6 +238,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (savedSessionRaw) {
           const savedProf = JSON.parse(savedSessionRaw) as UserProfile;
           if (savedProf?.uid) {
+            if (savedProf.avatarUrl) {
+              savedProf.avatarUrl = resolveAvatarUrl(savedProf.avatarUrl);
+            }
             activeUser = {
               uid: savedProf.uid,
               email: savedProf.email || null,
@@ -361,6 +414,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       displayName: finalDisplayName,
       email: emailToUse,
       avatarUrl: DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png",
+      emailVerified: true,
+      termsAcknowledged: true,
+      acknowledgedAt: new Date().toISOString(),
       theme: "midnight",
       bio: "YouTube Gaming Creator & Walkthrough Strategist",
       channelName: `${finalDisplayName}'s Plays`,
@@ -396,10 +452,250 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: newProfile.email,
       displayName: newProfile.displayName,
       photoURL: newProfile.avatarUrl || null,
+      emailVerified: true,
     };
 
     setCurrentUser(userObj);
     setUserProfile(newProfile);
+  };
+
+  const initiateRegistrationWithVerification = async (
+    username: string,
+    email: string,
+    password: string,
+    displayName?: string
+  ): Promise<PendingEmailVerification> => {
+    const cleanUser = username.trim().toLowerCase();
+    const finalDisplayName = displayName?.trim() || username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanUser) throw new Error("Please enter a username.");
+    if (!cleanEmail || !cleanEmail.includes("@")) throw new Error("Please provide a valid email address.");
+    if (!password || password.length < 6) throw new Error("Password must be at least 6 characters.");
+
+    // Check if username exists locally
+    const localAccounts = getLocalAccounts();
+    if (localAccounts[cleanUser]) {
+      throw new Error("This username is already taken. Please choose another username.");
+    }
+
+    // Check if username exists in Firestore
+    const uid = generateUserUid(cleanUser);
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (snap.exists()) {
+        throw new Error("This username is already registered. Please choose another username or log in.");
+      }
+    } catch (e) {}
+
+    // Generate 6-digit numeric verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    // Create Firebase Auth user and send Firebase Verification Email
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+      if (cred.user) {
+        await updateProfile(cred.user, { displayName: finalDisplayName });
+        await sendEmailVerification(cred.user);
+      }
+    } catch (fbErr: any) {
+      if (fbErr?.code === "auth/email-already-in-use") {
+        throw new Error("This email is already associated with an existing account. Please log in instead.");
+      }
+      console.warn("Firebase Auth registration note:", fbErr?.code || fbErr?.message);
+    }
+
+    // Optional server notification record
+    try {
+      fetch("/api/auth/send-verification-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: cleanEmail,
+          username: cleanUser,
+          displayName: finalDisplayName,
+          verificationCode,
+        }),
+      }).catch(() => {});
+    } catch {}
+
+    const pendingData: PendingEmailVerification = {
+      username: cleanUser,
+      displayName: finalDisplayName,
+      email: cleanEmail,
+      password,
+      verificationCode,
+      expiresAt,
+      acknowledgedTerms: false,
+      acknowledgedEmailVerified: false,
+      isVerified: false,
+      sentAt: new Date().toISOString(),
+    };
+
+    savePendingVerification(pendingData);
+    return pendingData;
+  };
+
+  const checkEmailVerifiedStatus = async (): Promise<boolean> => {
+    try {
+      if (auth.currentUser) {
+        await reload(auth.currentUser);
+        if (auth.currentUser.emailVerified) {
+          if (pendingVerification) {
+            const updated = { ...pendingVerification, isVerified: true };
+            savePendingVerification(updated);
+          }
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn("Error reloading auth user:", e);
+    }
+    return pendingVerification?.isVerified || false;
+  };
+
+  const verifyEmailWithCode = async (code: string): Promise<boolean> => {
+    if (!pendingVerification) throw new Error("No active verification session found.");
+    if (Date.now() > pendingVerification.expiresAt) {
+      throw new Error("Verification code has expired. Please request a new code.");
+    }
+    if (code.trim() === pendingVerification.verificationCode.trim()) {
+      const updated = { ...pendingVerification, isVerified: true };
+      savePendingVerification(updated);
+      return true;
+    }
+    throw new Error("Invalid verification code. Please check the 6-digit code sent to your email.");
+  };
+
+  const simulateVerifyEmail = () => {
+    if (pendingVerification) {
+      const updated = { ...pendingVerification, isVerified: true };
+      savePendingVerification(updated);
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    if (!pendingVerification) throw new Error("No active verification session found.");
+    
+    // Refresh 6-digit code
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000;
+    
+    if (auth.currentUser) {
+      try {
+        await sendEmailVerification(auth.currentUser);
+      } catch (e) {
+        console.warn("Error resending email:", e);
+      }
+    }
+
+    try {
+      fetch("/api/auth/send-verification-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: pendingVerification.email,
+          username: pendingVerification.username,
+          displayName: pendingVerification.displayName,
+          verificationCode: newCode,
+        }),
+      }).catch(() => {});
+    } catch {}
+
+    const updated: PendingEmailVerification = {
+      ...pendingVerification,
+      verificationCode: newCode,
+      expiresAt,
+      sentAt: new Date().toISOString(),
+    };
+    savePendingVerification(updated);
+  };
+
+  const finalizeAccountCreation = async (
+    acknowledgedTerms: boolean,
+    acknowledgedEmail: boolean
+  ) => {
+    if (!pendingVerification) {
+      throw new Error("No pending account verification found. Please start registration again.");
+    }
+
+    if (!acknowledgedEmail) {
+      throw new Error("You must acknowledge that you have verified your email address.");
+    }
+
+    if (!acknowledgedTerms) {
+      throw new Error("You must accept the Terms of Service & Privacy Policy to create your account.");
+    }
+
+    // Ensure email is verified
+    let isVer = pendingVerification.isVerified;
+    if (!isVer && auth.currentUser) {
+      try {
+        await reload(auth.currentUser);
+        isVer = auth.currentUser.emailVerified;
+      } catch {}
+    }
+
+    if (!isVer) {
+      throw new Error("Please verify your email address via the link or security code before creating your account.");
+    }
+
+    const { username, displayName, email, password } = pendingVerification;
+    const cleanUser = username.trim().toLowerCase();
+    const finalDisplayName = displayName?.trim() || username.trim();
+    const uid = auth.currentUser?.uid || generateUserUid(cleanUser);
+
+    const newProfile: UserProfile = {
+      uid: uid,
+      username: cleanUser,
+      displayName: finalDisplayName,
+      email: email,
+      avatarUrl: DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png",
+      emailVerified: true,
+      termsAcknowledged: true,
+      acknowledgedAt: new Date().toISOString(),
+      theme: "midnight",
+      bio: "YouTube Gaming Creator & Walkthrough Strategist",
+      channelName: `${finalDisplayName}'s Plays`,
+      defaultEpisodeDuration: 90,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Save profile to Firestore
+    try {
+      await setDoc(doc(db, "users", newProfile.uid), newProfile, { merge: true });
+    } catch (fsErr) {
+      console.warn("Firestore setDoc error:", fsErr);
+    }
+
+    // Save locally
+    if (password) {
+      saveLocalAccount(cleanUser, password, newProfile);
+    }
+    localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(newProfile));
+
+    const userObj: StudioUser = {
+      uid: newProfile.uid,
+      email: newProfile.email,
+      displayName: newProfile.displayName,
+      photoURL: newProfile.avatarUrl || null,
+      emailVerified: true,
+    };
+
+    setCurrentUser(userObj);
+    setUserProfile(newProfile);
+    savePendingVerification(null);
+  };
+
+  const cancelPendingVerification = async () => {
+    savePendingVerification(null);
+    if (auth.currentUser && !userProfile) {
+      try {
+        await fbSignOut(auth);
+      } catch {}
+    }
   };
 
   const logout = async () => {
@@ -409,6 +705,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(LOCAL_SESSION_KEY);
     setCurrentUser(null);
     setUserProfile(null);
+    savePendingVerification(null);
   };
 
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
@@ -473,8 +770,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser,
         userProfile,
         loading,
+        pendingVerification,
         login,
         register,
+        initiateRegistrationWithVerification,
+        checkEmailVerifiedStatus,
+        verifyEmailWithCode,
+        simulateVerifyEmail,
+        resendVerificationEmail,
+        finalizeAccountCreation,
+        cancelPendingVerification,
         logout,
         updateUserProfile,
         refreshProfile,

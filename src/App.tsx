@@ -63,6 +63,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { SubscriptionProvider, useSubscription } from "./context/SubscriptionContext";
 import { AdminProvider, useAdmin } from "./context/AdminContext";
 import { SubscriptionModal } from "./components/SubscriptionModal";
+import { AboutModal } from "./components/AboutModal";
+import { ContactUsModal } from "./components/ContactUsModal";
+import { Footer } from "./components/Footer";
 import { DemoBanner } from "./components/DemoBanner";
 import { AuthModal } from "./components/AuthModal";
 import { AccountSettingsModal } from "./components/AccountSettingsModal";
@@ -247,6 +250,8 @@ function PlaythroughStudioApp() {
   const [showBossEncounterPlanner, setShowBossEncounterPlanner] = useState<boolean>(false);
   const [showCompletionDashboard, setShowCompletionDashboard] = useState<boolean>(false);
   const [showMissablesLockoutsModal, setShowMissablesLockoutsModal] = useState<boolean>(false);
+  const [showAboutModal, setShowAboutModal] = useState<boolean>(false);
+  const [showContactUsModal, setShowContactUsModal] = useState<boolean>(false);
 
   const [thumbnailEpisodeId, setThumbnailEpisodeId] = useState<number | undefined>(undefined);
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -646,7 +651,7 @@ function PlaythroughStudioApp() {
     return (
       <div className="min-h-screen bg-[#07090e] flex flex-col items-center justify-center text-white space-y-4">
         <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-        <p className="text-xs font-semibold text-zinc-400">Loading Playthrough Studio Cloud...</p>
+        <p className="text-xs font-semibold text-zinc-400">Loading Digital Play Grid Cloud...</p>
       </div>
     );
   }
@@ -717,6 +722,7 @@ function PlaythroughStudioApp() {
         }}
         onOpenNewSeries={() => setShowNewSeriesModal(true)}
         onOpenAdmin={() => setShowAdminModal(true)}
+        onOpenAbout={() => setShowAboutModal(true)}
       />
 
       {/* Header Bar */}
@@ -747,6 +753,7 @@ function PlaythroughStudioApp() {
         currentTheme={currentTheme}
         onSelectTheme={handleSelectTheme}
         onOpenThemeSwitcher={() => setShowThemeSwitcherModal(true)}
+        onOpenAbout={() => setShowAboutModal(true)}
         milestoneHistory={milestoneHistory}
         onSelectMilestone={(m) => setActiveCelebrationMilestone(m)}
         onClearMilestoneHistory={() => {
@@ -798,6 +805,7 @@ function PlaythroughStudioApp() {
             onUpdateEpisodeStatus={handleUpdateStatus}
             onUpdateQuests={handleUpdateQuests}
             onUpdateSeriesSynopsis={handleUpdateSeriesSynopsis}
+            onOpenAbout={() => setShowAboutModal(true)}
           />
         ) : currentView === "admin" && isAdmin ? (
           <AdminDashboardView
@@ -833,6 +841,13 @@ function PlaythroughStudioApp() {
           />
         )}
       </main>
+
+      {/* Page Footer with Direct Contact Us Portal */}
+      <Footer
+        onOpenContactUs={() => setShowContactUsModal(true)}
+        onOpenAbout={() => setShowAboutModal(true)}
+        onOpenGuide={() => setShowGuide(true)}
+      />
 
       {/* Account Settings Modal */}
       <AccountSettingsModal
@@ -1166,6 +1181,19 @@ function PlaythroughStudioApp() {
 
       {/* Global Subscription & Tier Checkout Modal */}
       <SubscriptionModal />
+
+      {/* Digital Play Grid About Modal */}
+      <AboutModal
+        isOpen={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
+        onOpenContactUs={() => setShowContactUsModal(true)}
+      />
+
+      {/* Digital Play Grid Contact Us Form Modal */}
+      <ContactUsModal
+        isOpen={showContactUsModal}
+        onClose={() => setShowContactUsModal(false)}
+      />
     </div>
   );
 }

@@ -34,6 +34,8 @@ import {
   Sparkle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 
 interface YouTubeStudioUploadModalProps {
   isOpen: boolean;
@@ -365,13 +367,10 @@ export const YouTubeStudioUploadModal: React.FC<YouTubeStudioUploadModalProps> =
             {/* Creator Avatar Badge */}
             <div className="flex items-center gap-2 bg-zinc-950/80 px-2.5 py-1.5 rounded-xl border border-blue-500/30 shadow-inner">
               <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/50 flex items-center justify-center text-white text-[10px] font-black shrink-0">
-                <img
-                  src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                <RobustAvatarImg
+                  src={resolveAvatarUrl(userProfile?.avatarUrl)}
                   alt="Creator"
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                  }}
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-black" />
               </div>

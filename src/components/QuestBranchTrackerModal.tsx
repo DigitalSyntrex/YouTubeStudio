@@ -199,21 +199,21 @@ export const QuestBranchTrackerModal: React.FC<QuestBranchTrackerModalProps> = (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="bg-[#121212] border border-purple-500/30 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden my-6 flex flex-col max-h-[90vh]">
+      <div className="bg-[#1c273e] border border-blue-500/35 w-full max-w-5xl rounded-2xl shadow-2xl shadow-blue-950/60 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="p-5 bg-[#09090b] border-b border-white/10 flex flex-wrap items-center justify-between gap-4 shrink-0">
+        <div className="p-5 bg-[#162136] border-b border-blue-500/30 flex flex-wrap items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shrink-0 shadow-inner">
+            <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
               <GitBranch className="w-6 h-6 text-purple-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-extrabold text-zinc-100">{gameTitle}</h2>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                <h2 className="text-lg font-extrabold text-white">{gameTitle}</h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-200 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-400/30">
                   Branching Quest Tracker
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-blue-200/80">
                 Track main story acts, missable side quests, character arcs & points of no return.
               </p>
             </div>
@@ -222,7 +222,7 @@ export const QuestBranchTrackerModal: React.FC<QuestBranchTrackerModalProps> = (
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyQuestLog}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-300 bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 rounded-xl transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-300 bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 rounded-xl transition-all cursor-pointer"
               title="Copy Markdown quest log to clipboard"
             >
               {copiedLog ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-purple-400" />}
@@ -231,7 +231,7 @@ export const QuestBranchTrackerModal: React.FC<QuestBranchTrackerModalProps> = (
 
             <button
               onClick={handleOpenAddForm}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition-all shadow-md shadow-purple-900/40"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition-all shadow-md shadow-purple-900/40 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Quest Branch</span>
@@ -239,7 +239,7 @@ export const QuestBranchTrackerModal: React.FC<QuestBranchTrackerModalProps> = (
 
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-zinc-100 bg-[#18181b] hover:bg-[#27272a] rounded-xl transition-colors"
+              className="p-2 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -247,7 +247,7 @@ export const QuestBranchTrackerModal: React.FC<QuestBranchTrackerModalProps> = (
         </div>
 
         {/* Progress & Alert Dashboard Banner */}
-        <div className="p-4 bg-[#0d0d10] border-b border-white/5 space-y-3 shrink-0">
+        <div className="p-4 bg-gradient-to-r from-[#0d1e44] via-[#09142f] to-[#060e22] border-b border-blue-500/20 space-y-3 shrink-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-4 text-xs">
               <div>

@@ -51,6 +51,8 @@ import {
 } from "lucide-react";
 import { formatCompactNumber } from "./YouTubeStudioUploadModal";
 import { useAuth } from "../context/AuthContext";
+import { resolveAvatarUrl } from "../data/defaultAvatars";
+import { RobustAvatarImg } from "./RobustAvatarImg";
 import { findSynopsisInDb, CustomSynopsisEntry } from "../utils/gameSynopsisDb";
 
 interface EpisodeListProps {
@@ -386,18 +388,18 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
     <div className="max-w-7xl mx-auto px-3.5 sm:px-5 lg:px-6 py-4 space-y-3.5">
 
       {/* Unified Series Production Overview & Creator Focus Window */}
-      <div className="bg-[#0b0e17] rounded-xl border border-white/10 shadow-md overflow-hidden transition-all duration-300">
+      <div className="bg-[#1c273e] rounded-2xl border border-blue-500/35 shadow-xl shadow-blue-950/50 overflow-hidden transition-all duration-300">
         {/* Window Header */}
-        <div className="px-3.5 py-2 bg-[#080b12] border-b border-white/10 flex items-center justify-between gap-2.5 flex-wrap">
+        <div className="px-3.5 py-2.5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-2.5 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <div className="flex items-center gap-1.5 text-blue-400 font-extrabold text-xs uppercase tracking-wider shrink-0">
-              <Clock className="w-3.5 h-3.5 text-blue-400" />
+            <div className="flex items-center gap-1.5 text-cyan-300 font-extrabold text-xs uppercase tracking-wider shrink-0">
+              <Clock className="w-3.5 h-3.5 text-cyan-400" />
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>Series Production Overview & Creator Focus</span>
             </div>
 
             {isOverviewMinimized && (
-              <span className="text-[11px] text-zinc-400 font-medium truncate hidden sm:inline">
+              <span className="text-[11px] text-blue-200/80 font-medium truncate hidden sm:inline">
                 • {totalHours} hrs • {publishedCount}/{episodes.length} published ({progressPercent}%)
               </span>
             )}
@@ -405,7 +407,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
 
           <button
             onClick={() => setIsOverviewMinimized(!isOverviewMinimized)}
-            className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-md text-xs font-bold border border-amber-500/30 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 rounded-lg text-xs font-bold border border-amber-500/40 transition-all cursor-pointer shrink-0 shadow-sm"
             title={isOverviewMinimized ? "Expand Overview & Creator Focus Window" : "Minimize Overview & Creator Focus Window"}
           >
             {isOverviewMinimized ? (
@@ -423,40 +425,40 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
         </div>
 
         {!isOverviewMinimized ? (
-          <div className="p-3.5 space-y-3 bg-[#080a11]">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-wrap">
-              <div className="bg-[#05070e] p-2 rounded-lg border border-white/5 flex items-center justify-between shadow-inner">
+          <div className="p-3.5 space-y-3 bg-[#19243a]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-wrap">
+              <div className="bg-[#141e30] p-3 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all flex items-center justify-between shadow-lg shadow-blue-950/40">
                 <div>
-                  <span className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider block">Duration</span>
-                  <span className="text-zinc-100 font-black text-xs sm:text-sm">{totalHours} Hours</span>
-                  <span className="text-zinc-400 text-[9px] block">{episodes.length} Total Episodes</span>
+                  <span className="text-blue-300/80 text-[10px] uppercase font-extrabold tracking-wider block">Duration</span>
+                  <span className="text-white font-black text-sm sm:text-base">{totalHours} Hours</span>
+                  <span className="text-blue-200/70 text-[10px] block font-medium">{episodes.length} Total Episodes</span>
                 </div>
-                <div className="p-1.5 bg-blue-500/10 rounded-md text-blue-400 border border-blue-500/20">
-                  <Clock className="w-3.5 h-3.5" />
+                <div className="p-2 bg-blue-500/20 rounded-xl text-blue-300 border border-blue-400/40 shadow-sm">
+                  <Clock className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="bg-[#05070e] p-2 rounded-lg border border-white/5 flex items-center justify-between shadow-inner">
+              <div className="bg-[#141e30] p-3 rounded-xl border border-amber-500/40 hover:border-amber-400/60 transition-all flex items-center justify-between shadow-lg shadow-amber-950/30">
                 <div>
-                  <span className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider block">Recorded</span>
-                  <span className="text-amber-300 font-black text-xs sm:text-sm">{recordedHours} Hours</span>
-                  <span className="text-zinc-400 text-[9px] block">
+                  <span className="text-amber-300/80 text-[10px] uppercase font-extrabold tracking-wider block">Recorded</span>
+                  <span className="text-amber-300 font-black text-sm sm:text-base">{recordedHours} Hours</span>
+                  <span className="text-amber-200/70 text-[10px] block font-medium">
                     {episodes.filter((e) => e.status !== "not_started").length}/{episodes.length} Episodes
                   </span>
                 </div>
-                <div className="p-1.5 bg-amber-500/10 rounded-md text-amber-400 border border-amber-500/20">
-                  <Mic className="w-3.5 h-3.5" />
+                <div className="p-2 bg-amber-500/20 rounded-xl text-amber-300 border border-amber-400/40 shadow-sm">
+                  <Mic className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="bg-[#05070e] p-2 rounded-lg border border-white/5 flex items-center justify-between shadow-inner">
+              <div className="bg-[#141e30] p-3 rounded-xl border border-emerald-500/40 hover:border-emerald-400/60 transition-all flex items-center justify-between shadow-lg shadow-emerald-950/30">
                 <div>
-                  <span className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider block">Published</span>
-                  <span className="text-emerald-400 font-black text-xs sm:text-sm">{publishedCount} / {episodes.length}</span>
-                  <span className="text-emerald-400 text-[9px] block font-semibold">{progressPercent}% Complete</span>
+                  <span className="text-emerald-300/80 text-[10px] uppercase font-extrabold tracking-wider block">Published</span>
+                  <span className="text-emerald-300 font-black text-sm sm:text-base">{publishedCount} / {episodes.length}</span>
+                  <span className="text-emerald-400 text-[10px] block font-bold">{progressPercent}% Complete</span>
                 </div>
-                <div className="p-1.5 bg-emerald-500/10 rounded-md text-emerald-400 border border-emerald-500/20">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-300 border border-emerald-400/40 shadow-sm">
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -471,17 +473,14 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
 
             {/* 3. Integrated Creator Focus Section */}
             {(nextToRecord || nextToEdit || nextToUpload) && (
-              <div className="pt-2 border-t border-white/10 space-y-2">
+              <div className="pt-2 border-t border-blue-500/25 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="relative w-5 h-5 rounded-md overflow-hidden bg-gradient-to-tr from-amber-600 to-amber-400 border border-amber-400/50 flex items-center justify-center text-white text-[9px] font-black shrink-0 shadow-sm">
-                      <img
-                        src={userProfile?.avatarUrl || "/avatars_128/cyber.png"}
+                      <RobustAvatarImg
+                        src={resolveAvatarUrl(userProfile?.avatarUrl)}
                         alt="Creator"
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/avatars_128/cyber.png";
-                        }}
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -491,7 +490,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                       </h4>
                     </div>
                   </div>
-                  <span className="text-[10px] text-zinc-400 hidden sm:inline">
+                  <span className="text-[10px] text-blue-200/70 hidden sm:inline">
                     Click advance button to fast-track production
                   </span>
                 </div>
@@ -499,7 +498,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
                   {/* Next to Record */}
                   {nextToRecord ? (
-                    <div className="p-2.5 bg-[#09090b] rounded-xl border border-amber-500/30 flex flex-col justify-between gap-1.5 hover:border-amber-500/50 transition-colors">
+                    <div className="p-3 bg-[#141e30] rounded-xl border border-amber-500/35 flex flex-col justify-between gap-1.5 hover:border-amber-400/60 transition-all shadow-md shadow-blue-950/40">
                       <div>
                         <div className="flex items-center justify-between text-[10px] font-extrabold uppercase text-amber-400 mb-0.5">
                           <span className="flex items-center gap-1">
@@ -508,7 +507,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                           <span className="bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30">Pt {nextToRecord.partNumber}</span>
                         </div>
                         <h5 className="font-bold text-white text-xs line-clamp-1">{nextToRecord.title}</h5>
-                        <p className="text-[10px] text-zinc-400 line-clamp-1">{nextToRecord.startPoint} ➔ {nextToRecord.endPoint}</p>
+                        <p className="text-[10px] text-zinc-300 line-clamp-1">{nextToRecord.startPoint} ➔ {nextToRecord.endPoint}</p>
                       </div>
                       <div className="pt-1">
                         <button
@@ -521,14 +520,14 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="p-2.5 bg-[#09090b]/50 rounded-xl border border-zinc-800/80 text-zinc-500 text-[11px] flex items-center justify-center text-center">
+                    <div className="p-3 bg-[#141e30] rounded-xl border border-blue-500/20 text-zinc-400 text-[11px] flex items-center justify-center text-center">
                       🎉 All episodes recorded!
                     </div>
                   )}
 
                   {/* Next to Edit */}
                   {nextToEdit ? (
-                    <div className="p-2.5 bg-[#09090b] rounded-xl border border-purple-500/30 flex flex-col justify-between gap-1.5 hover:border-purple-500/50 transition-colors">
+                    <div className="p-3 bg-[#141e30] rounded-xl border border-purple-500/35 flex flex-col justify-between gap-1.5 hover:border-purple-400/60 transition-all shadow-md shadow-blue-950/40">
                       <div>
                         <div className="flex items-center justify-between text-[10px] font-extrabold uppercase text-purple-300 mb-0.5">
                           <span className="flex items-center gap-1">
@@ -537,7 +536,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                           <span className="bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded border border-purple-500/30">Pt {nextToEdit.partNumber}</span>
                         </div>
                         <h5 className="font-bold text-white text-xs line-clamp-1">{nextToEdit.title}</h5>
-                        <p className="text-[10px] text-zinc-400 line-clamp-1">{nextToEdit.startPoint} ➔ {nextToEdit.endPoint}</p>
+                        <p className="text-[10px] text-zinc-300 line-clamp-1">{nextToEdit.startPoint} ➔ {nextToEdit.endPoint}</p>
                       </div>
                       <button
                         onClick={() => onUpdateStatus(nextToEdit.id, "edited")}
@@ -548,14 +547,14 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                       </button>
                     </div>
                   ) : (
-                    <div className="p-2.5 bg-[#09090b]/50 rounded-xl border border-zinc-800/80 text-zinc-500 text-[11px] flex items-center justify-center text-center">
+                    <div className="p-3 bg-[#141e30] rounded-xl border border-blue-500/20 text-zinc-400 text-[11px] flex items-center justify-center text-center">
                       ✂️ No recorded videos waiting for editing.
                     </div>
                   )}
 
                   {/* Next to Upload */}
                   {nextToUpload ? (
-                    <div className="p-2.5 bg-[#09090b] rounded-xl border border-blue-500/30 flex flex-col justify-between gap-1.5 hover:border-blue-500/50 transition-colors">
+                    <div className="p-3 bg-[#141e30] rounded-xl border border-blue-500/35 flex flex-col justify-between gap-1.5 hover:border-blue-400/60 transition-all shadow-md shadow-blue-950/40">
                       <div>
                         <div className="flex items-center justify-between text-[10px] font-extrabold uppercase text-blue-400 mb-0.5">
                           <span className="flex items-center gap-1">
@@ -564,7 +563,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                           <span className="bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded border border-blue-500/30">Pt {nextToUpload.partNumber}</span>
                         </div>
                         <h5 className="font-bold text-white text-xs line-clamp-1">{nextToUpload.title}</h5>
-                        <p className="text-[10px] text-zinc-400 line-clamp-1">{nextToUpload.startPoint} ➔ {nextToUpload.endPoint}</p>
+                        <p className="text-[10px] text-zinc-300 line-clamp-1">{nextToUpload.startPoint} ➔ {nextToUpload.endPoint}</p>
                       </div>
                       <div className="flex gap-1.5">
                         {onOpenYouTubeStudio && (
@@ -587,7 +586,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="p-2.5 bg-[#09090b]/50 rounded-xl border border-zinc-800/80 text-zinc-500 text-[11px] flex items-center justify-center text-center">
+                    <div className="p-3 bg-[#141e30] rounded-xl border border-blue-500/20 text-zinc-400 text-[11px] flex items-center justify-center text-center">
                       🚀 No edited videos waiting for upload.
                     </div>
                   )}
@@ -597,7 +596,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
           </div>
         ) : (
           /* Minimized Compact Strip showing stats + Creator Focus quick items + Milestone Progress Bar */
-          <div className="p-3 bg-[#09090b] space-y-2.5">
+          <div className="p-3 bg-[#1c273e] space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[11px] font-bold text-zinc-300 bg-white/5 px-2 py-1 rounded border border-white/10">

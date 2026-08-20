@@ -962,3 +962,109 @@ export function removeAdminUser(params: {
   return { success: true, message: `Revoked Administrator privileges from ${cleanEmail}.` };
 }
 
+// In-Memory Contact Messages Database
+export interface ContactMessageRecord {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  topic: "feedback" | "feature" | "bug" | "help" | "general";
+  userId?: string;
+  userEmail?: string;
+  status: "unread" | "read" | "in_progress" | "resolved" | "archived";
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const contactMessagesDb = new Map<string, ContactMessageRecord>();
+
+// Seed sample welcome support message
+const INITIAL_MESSAGE: ContactMessageRecord = {
+  id: "msg_welcome_seed",
+  name: "DigitalPlayGrid Creator Bot",
+  email: "system@digitalplaygrid.com",
+  subject: "Welcome to your Direct Admin Inbox!",
+  message: "Hi syntrex! All user feedback, bug reports, and contact form submissions sent from your website will appear right here in real time. You can review them, mark them as in-progress or resolved, copy sender emails, or reply directly.",
+  topic: "general",
+  status: "unread",
+  adminNotes: "System initial welcome note",
+  createdAt: new Date(Date.now() - 3600000).toISOString(),
+  updatedAt: new Date(Date.now() - 3600000).toISOString(),
+};
+contactMessagesDb.set(INITIAL_MESSAGE.id, INITIAL_MESSAGE);
+
+export function saveContactMessage(params: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  topic?: "feedback" | "feature" | "bug" | "help" | "general";
+  userId?: string;
+  userEmail?: string;
+}): { success: boolean; message: ContactMessageRecord } {
+  const id = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const now = new Date().toISOString();
+  const record: ContactMessageRecord = {
+    id,
+    name: params.name || "Anonymous Creator",
+    email: params.email,
+    subject: params.subject || "Message from DPG User",
+    message: params.message,
+    topic: params.topic || "general",
+    userId: params.userId,
+    userEmail: params.userEmail,
+    status: "unread",
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  contactMessagesDb.set(id, record);
+
+  recordAuditLog({
+    userId: params.userId || "visitor",
+    userEmail: params.email,
+    action: "contact_message_submitted",
+    resource: "/api/contact/submit",
+    status: "success",
+    details: {
+      messageId: id,
+      subject: record.subject,
+      topic: record.topic,
+    },
+  });
+
+  return { success: true, message: record };
+}
+
+export function getAllContactMessages(): ContactMessageRecord[] {
+  return Array.from(contactMessagesDb.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export function updateContactMessage(params: {
+  id: string;
+  status?: "unread" | "read" | "in_progress" | "resolved" | "archived";
+  adminNotes?: string;
+}): { success: boolean; message?: ContactMessageRecord; error?: string } {
+  const existing = contactMessagesDb.get(params.id);
+  if (!existing) {
+    return { success: false, error: "Message not found" };
+  }
+
+  if (params.status) existing.status = params.status;
+  if (params.adminNotes !== undefined) existing.adminNotes = params.adminNotes;
+  existing.updatedAt = new Date().toISOString();
+
+  contactMessagesDb.set(params.id, existing);
+  return { success: true, message: existing };
+}
+
+export function deleteContactMessage(id: string): { success: boolean } {
+  const deleted = contactMessagesDb.delete(id);
+  return { success: deleted };
+}
+
+

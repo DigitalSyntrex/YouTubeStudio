@@ -31,6 +31,7 @@ import {
   Radio,
   Maximize2,
   Minimize2,
+  Info,
 } from "lucide-react";
 import { PlaythroughSeries, Episode, EpisodeStatus, QuestEntry } from "../types";
 import { SeriesDashboard } from "./SeriesDashboard";
@@ -51,6 +52,7 @@ interface LandingPageProps {
   onUpdateQuests?: (updatedQuests: QuestEntry[]) => void;
   onOpenGameLogoModal?: () => void;
   onUpdateSeriesSynopsis?: (seriesId: string, synopsis: string, source?: string) => void;
+  onOpenAbout?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -69,6 +71,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onUpdateQuests,
   onOpenGameLogoModal,
   onUpdateSeriesSynopsis,
+  onOpenAbout,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "active" | "completed">("all");
@@ -169,17 +172,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       />
 
       {/* Playlists & Playthroughs Management Hub Window */}
-      <section className="bg-gradient-to-b from-[#0d101a] via-[#090b13] to-[#050609] border border-blue-500/30 rounded-3xl overflow-hidden shadow-2xl shadow-blue-950/40 relative ring-1 ring-white/10 transition-all duration-300">
+      <section className="bg-[#1c273e] border border-blue-500/35 rounded-3xl overflow-hidden shadow-2xl shadow-blue-950/50 relative ring-1 ring-blue-400/20 transition-all duration-300">
         {/* Background Glows & Subtle Grid Depth */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Window Header Bar with Minimize & Expand */}
-        <div className="px-4 py-2 bg-[#09090b]/90 border-b border-white/10 flex items-center justify-between gap-3 relative z-10">
+        <div className="px-4 py-2.5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-3 relative z-10">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <div className="flex items-center gap-1.5 text-blue-400 font-extrabold text-xs uppercase tracking-wider shrink-0">
-              <Gamepad2 className="w-4 h-4 text-blue-400" />
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="flex items-center gap-1.5 text-cyan-300 font-extrabold text-xs uppercase tracking-wider shrink-0">
+              <Gamepad2 className="w-4 h-4 text-cyan-400" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>Gaming Playthrough Playlists</span>
             </div>
 
@@ -188,7 +191,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </span>
 
             {isPlaylistsMinimized && (
-              <span className="text-[11px] text-zinc-400 font-medium truncate hidden sm:inline">
+              <span className="text-[11px] text-blue-200/80 font-medium truncate hidden sm:inline">
                 • {activePlaythroughsList.length} Active • {completedSeriesList.length} Completed
               </span>
             )}
@@ -308,10 +311,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     return (
                       <div
                         key={series.id}
-                        className={`group relative bg-gradient-to-b from-[#111420] via-[#0d0f17] to-[#08090e] border rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-950/40 hover:-translate-y-0.5 ${
+                        className={`group relative bg-[#141e30] border rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:border-blue-400/60 hover:shadow-xl hover:shadow-blue-950/60 hover:-translate-y-0.5 ${
                           isSelected
-                            ? "border-blue-500/60 ring-2 ring-blue-500/30 shadow-lg shadow-blue-950/30"
-                            : "border-white/10"
+                            ? "border-blue-400 ring-2 ring-blue-500/40 shadow-lg shadow-blue-950/50"
+                            : "border-blue-500/30"
                         }`}
                       >
                         <div className="space-y-3">
@@ -453,11 +456,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Highlight Section: Completed Playlists */}
       {completedSeriesList.length > 0 && (
-        <section className="bg-gradient-to-r from-emerald-950/30 via-[#0d1017] to-[#0a0d14] border border-emerald-500/30 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-950/30 space-y-0 transition-all duration-300">
+        <section className="bg-[#1c273e] border border-blue-500/35 rounded-3xl overflow-hidden shadow-2xl shadow-blue-950/50 space-y-0 transition-all duration-300 ring-1 ring-blue-400/20">
           {/* Header Bar with Minimize & Expand */}
-          <div className="px-5 sm:px-6 py-3.5 bg-[#090b10]/95 border-b border-emerald-500/20 flex items-center justify-between gap-3">
+          <div className="px-5 sm:px-6 py-3.5 bg-[#162136] border-b border-blue-500/30 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+              <div className="w-9 h-9 rounded-2xl bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
                 <Trophy className="w-4 h-4" />
               </div>
               <div className="min-w-0">
@@ -465,12 +468,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <h3 className="text-base sm:text-lg font-black text-white truncate">
                     Completed Let's Play Series Showcase
                   </h3>
-                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-blue-300 bg-blue-500/20 border border-blue-400/30 px-2 py-0.5 rounded-full">
                     {completedSeriesList.length} Finished
                   </span>
                 </div>
                 {!isShowcaseMinimized && (
-                  <p className="text-xs text-zinc-400 hidden sm:block">
+                  <p className="text-xs text-zinc-300 hidden sm:block">
                     Fully finished walkthroughs ready for YouTube playlist publishing and metadata export.
                   </p>
                 )}
@@ -479,7 +482,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <button
               onClick={() => setIsShowcaseMinimized(!isShowcaseMinimized)}
-              className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-lg text-xs font-bold border border-amber-500/30 transition-all cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-[#141e30] hover:bg-white/10 text-amber-300 rounded-lg text-xs font-bold border border-amber-500/30 transition-all cursor-pointer shrink-0"
               title={isShowcaseMinimized ? "Expand Completed Let's Play Series Showcase Window" : "Minimize Completed Let's Play Series Showcase Window"}
             >
               {isShowcaseMinimized ? (
@@ -497,18 +500,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {!isShowcaseMinimized && (
-            <div className="p-5 sm:p-7 space-y-4">
+            <div className="p-5 sm:p-7 space-y-4 bg-[#1c273e]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {completedSeriesList.map((cs) => {
                   const totalHours = getSeriesTotalHours(cs.episodes);
                   return (
                     <div
                       key={cs.id}
-                      className="bg-[#090b10] border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 hover:border-emerald-500/50 transition-colors shadow-sm"
+                      className="bg-[#141e30] border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 hover:border-blue-400 transition-colors shadow-sm"
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-2 py-0.5 rounded">
                             100% Completed
                           </span>
                           <span className="text-xs font-mono text-zinc-400">{cs.episodes.length} Episodes</span>
@@ -522,9 +525,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           onSelectSeries(cs.id);
                           onOpenExport();
                         }}
-                        className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                        className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 hover:text-white border border-blue-400/40 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
                       >
-                        <Download className="w-3.5 h-3.5 text-emerald-400" />
+                        <Download className="w-3.5 h-3.5 text-blue-300" />
                         <span>Export Metadata</span>
                       </button>
                     </div>

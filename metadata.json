@@ -1,5 +1,5 @@
 {
-  "name": "DigitalPlayGrid YouTube Playthrough Planner",
+  "name": "Digital Play Grid",
   "description": "Professional YouTube gaming playthrough and let's play production management platform with comprehensive database, entitlement access control, OBS integration, and high-CTR thumbnail studio.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
