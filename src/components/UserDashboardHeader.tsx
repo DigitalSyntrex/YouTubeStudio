@@ -54,7 +54,7 @@ export const UserDashboardHeader: React.FC<UserDashboardHeaderProps> = ({
   );
   const completionRate = totalEpisodes > 0 ? Math.round((totalCompleted / totalEpisodes) * 100) : 0;
 
-  const defaultAvatar = DEFAULT_CREATOR_AVATARS[0]?.url || "/avatars_128/cyber.png";
+  const defaultAvatar = DEFAULT_CREATOR_AVATARS[0]?.url || "/main/public/avatars_128/cyber.png";
   const avatarSrc = (!imgError && userProfile?.avatarUrl) ? resolveAvatarUrl(userProfile.avatarUrl) : defaultAvatar;
 
   return (

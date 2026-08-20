@@ -1065,29 +1065,45 @@ Format your response as a valid JSON object:
     res.json({ success: result.success });
   });
 
-  // Explicit Static Avatar Serving Routes with full CORS and caching
-  app.get(["/avatars_128/:filename", "/api/avatars/:filename", "/avatars/:filename"], (req, res) => {
-    const filename = path.basename(req.params.filename || "cyber.png");
-    const avatar128Path = path.join(process.cwd(), "public", "avatars_128", filename);
-    const publicRootPath = path.join(process.cwd(), "public", filename);
+  // Explicit Static Avatar Serving Routes pointing ONLY to /main/public/avatars_128
+  app.get(
+    [
+      "/main/public/avatars_128/:filename",
+      "/avatars_128/:filename",
+      "/api/avatars/:filename"
+    ],
+    (req, res) => {
+      const filename = path.basename(req.params.filename || "cyber.png");
+      const primaryAvatarPath = path.join("/main", "public", "avatars_128", filename);
+      const fallbackDirAvatarPath = path.join(process.cwd(), "public", "avatars_128", filename);
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
 
-    if (fs.existsSync(avatar128Path)) {
-      return res.sendFile(avatar128Path);
+      if (fs.existsSync(primaryAvatarPath)) {
+        return res.sendFile(primaryAvatarPath);
+      }
+      if (fs.existsSync(fallbackDirAvatarPath)) {
+        return res.sendFile(fallbackDirAvatarPath);
+      }
+      const defaultCyber = path.join("/main", "public", "avatars_128", "cyber.png");
+      if (fs.existsSync(defaultCyber)) {
+        return res.sendFile(defaultCyber);
+      }
+      res.status(404).send("Avatar not found");
     }
-    if (fs.existsSync(publicRootPath)) {
-      return res.sendFile(publicRootPath);
-    }
-    // Fallback to cyber.png if requested avatar doesn't exist
-    const defaultCyber = path.join(process.cwd(), "public", "avatars_128", "cyber.png");
-    if (fs.existsSync(defaultCyber)) {
-      return res.sendFile(defaultCyber);
-    }
-    res.status(404).send("Avatar not found");
-  });
+  );
+
+  // Serve static assets from /main/public/avatars_128 explicitly
+  if (fs.existsSync("/main/public/avatars_128")) {
+    app.use("/main/public/avatars_128", express.static("/main/public/avatars_128", {
+      setHeaders: (res) => {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      }
+    }));
+  }
 
   // Serve static assets from public folder (avatars, icons, logos)
   const publicPath = path.join(process.cwd(), "public");

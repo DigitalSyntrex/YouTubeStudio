@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { resolveAvatarUrl, DEFAULT_CREATOR_AVATARS } from "../data/defaultAvatars";
+import { resolveAvatarUrl, DEFAULT_CREATOR_AVATARS, AVATAR_DIR } from "../data/defaultAvatars";
 import {
   Gamepad2,
   Swords,
@@ -98,12 +98,10 @@ export const RobustAvatarImg: React.FC<RobustAvatarImgProps> = ({
   const accentColor = presetInfo?.color || "#3b82f6";
   const FallbackIcon = PRESET_ICONS[cleanPresetId] || Gamepad2;
 
-  // Determine current attempt src based on failure stages
+  // Determine current attempt src strictly from /main/public/avatars_128
   let currentSrc = resolveAvatarUrl(src);
   if (failStage === 1) {
-    currentSrc = `/api/avatars/${cleanPresetId}.png`;
-  } else if (failStage === 2) {
-    currentSrc = `/${cleanPresetId}.png`;
+    currentSrc = `${AVATAR_DIR}/${cleanPresetId}.png`;
   }
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -113,19 +111,16 @@ export const RobustAvatarImg: React.FC<RobustAvatarImgProps> = ({
     }
   };
 
-  if (failStage >= 3) {
+  if (failStage >= 2) {
     return (
       <div
         className={`w-full h-full flex flex-col items-center justify-center text-white relative overflow-hidden select-none ${className}`}
         style={{
-          background: `linear-gradient(135deg, ${accentColor}33 0%, #0c101d 100%)`,
-          border: `1px solid ${accentColor}44`
+          background: `radial-gradient(circle at center, ${accentColor}33 0%, #0a0f1d 100%)`,
+          border: `1px solid ${accentColor}55`,
         }}
       >
-        <FallbackIcon className="w-1/2 h-1/2" style={{ color: accentColor }} />
-        <span className="text-[8px] font-black uppercase tracking-wider mt-0.5 opacity-90 truncate max-w-[90%]" style={{ color: accentColor }}>
-          {presetInfo?.name || cleanPresetId}
-        </span>
+        <FallbackIcon className="w-1/2 h-1/2 drop-shadow" style={{ color: accentColor }} />
       </div>
     );
   }
@@ -137,10 +132,8 @@ export const RobustAvatarImg: React.FC<RobustAvatarImgProps> = ({
       alt={alt || presetInfo?.name || "Creator Avatar"}
       className={className}
       onError={handleError}
-      loading="lazy"
+      loading="eager"
       decoding="async"
-      referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
     />
   );
 };
